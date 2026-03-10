@@ -1,89 +1,107 @@
-# AhaMaze
+# 🧩 AhaMaze
 
-A beautiful, atmospheric maze puzzle game with neon aesthetics, smooth animations, and multiple themes.
+AhaMaze is a high-quality, atmospheric web-based maze puzzle game with neon aesthetics, fluid animations, and a rich set of themes. It's designed to be both a relaxing puzzle experience and a challenging race against time.
 
-Navigate through procedurally generated mazes, race against the clock, and try to match the optimal solution path.
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-## Features
+---
 
-- **Procedural Maze Generation** — Recursive Backtracker algorithm creates unique mazes every time
-- **3 Difficulty Levels** — Easy (25x25), Medium (35x35), Hard (45x45)
-- **3 Visual Themes** — Neon, Retro, Light
-- **Bilingual UI** — English / 中文
-- **Responsive Design** — Desktop keyboard (WASD / Arrow keys) + mobile touch controls (swipe & D-pad)
-- **Real-time Minimap** — Canvas-rendered overview with path tracking
-- **Sound Effects** — Web Audio API synth sounds for move, bump, and win
-- **Win Celebration** — Confetti particles + optimal path comparison
-- **Timer & Move Counter** — Track your performance per level
+## ✨ Features
 
-## Tech Stack
+- **Procedural Maze Generation** — Recursive Backtracker algorithm with "strategic loops" to create unique, perfect mazes with subtle alternative routes.
+- **Multiple Shapes** — Choose between **Square**, **Circle**, and **Diamond** maze layouts.
+- **4 Difficulty Levels** —
+  - **Kids** (15x15)
+  - **Easy** (25x25)
+  - **Medium** (35x35)
+  - **Hard** (45x45)
+- **10+ Atmospheric Themes** — Neon, Retro, Princess, Starry, Midnight, Ocean, Amber, Rose, and more.
+- **Game Modes** —
+  - **Classic**: Navigate to the exit with full visibility.
+  - **Challenge**: Experience "Fog of War" — navigate in the dark with only a small light around you.
+- **Bilingual UI** — Full support for **English** and **简体中文**.
+- **Cross-Platform Controls** — Desktop keyboard (WASD/Arrows), Mobile touch (Swipe/D-pad), and Gamepad support.
+- **Sound Effects** — Minimalist Web Audio API synth sounds for immersive feedback.
+- **Leaderboard** — Track your best times and scores locally for each difficulty level.
+- **Export to Image** — Save your generated mazes as high-quality PNG images.
 
-| Layer | Tech |
-|-------|------|
-| Framework | React 19 |
-| Language | TypeScript 5.8 |
-| Build | Vite 6 |
-| Styling | Tailwind CSS 4 |
-| Animation | Motion (Framer Motion) |
-| Icons | Lucide React |
-| Effects | canvas-confetti |
+## 🛠️ Tech Stack
 
-## Getting Started
+| Component | Technology |
+|-----------|------------|
+| **Framework** | [React 19](https://react.dev/) |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) |
+| **Animation** | [Motion (Framer Motion)](https://motion.dev/) |
+| **Build Tool** | [Vite 6](https://vitejs.dev/) |
+| **Language** | [TypeScript 5.8](https://www.typescriptlang.org/) |
+| **Icons** | [Lucide React](https://lucide.dev/) |
+| **SFX** | Web Audio API |
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18
+- [Node.js](https://nodejs.org/) (>= 18.x)
+- [npm](https://www.npmjs.com/)
 
-### Install & Run
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/your-username/AhaMaze.git
+
+# Navigate to the project directory
+cd AhaMaze
+
 # Install dependencies
 npm install
 
-# Start dev server (http://localhost:3000)
+# Start the development server
 npm run dev
 ```
 
-### Scripts
+The game will be available at `http://localhost:3000`.
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server on port 3000 |
-| `npm run build` | Production build to `dist/` |
-| `npm run preview` | Preview production build |
-| `npm run clean` | Remove `dist/` directory |
-| `npm run lint` | Type-check with `tsc --noEmit` |
+## 🎮 Controls
 
-## Project Structure
+### Desktop
+- **Move**: `W`, `A`, `S`, `D` or `Arrow Keys`
+- **Reset/New Maze**: `R`
+- **Undo**: `U` (if implemented)
+- **Screenshot**: `P`
+
+### Mobile
+- **Swipe**: Swipe in any direction to move.
+- **Virtual D-pad**: Use the on-screen controls.
+
+### Gamepad
+- **Left Stick / D-pad**: Move the player.
+- **South Button (A)**: Reset/New Maze.
+
+## 📁 Project Structure
 
 ```
 AhaMaze/
-├── index.html              # Entry HTML
-├── package.json
-├── vite.config.ts          # Vite + Tailwind + React config
-├── tsconfig.json
-└── src/
-    ├── main.tsx            # React entry point
-    ├── App.tsx             # Root component
-    ├── index.css           # Global styles + Tailwind imports
-    ├── components/
-    │   └── Game.tsx        # Main game UI (maze grid, controls, settings, win overlay)
-    └── utils/
-        ├── maze.ts         # Maze generation (Recursive Backtracker) & solving (BFS)
-        └── audio.ts        # Web Audio API sound effects
+├── src/
+│   ├── components/
+│   │   └── Game.tsx       # Core Game Engine & UI
+│   ├── utils/
+│   │   ├── maze.ts        # Maze Gen & BFS Solving Algorithms
+│   │   └── audio.ts       # Web Audio SFX Generator
+│   ├── App.tsx            # Main Entry Component
+│   ├── main.tsx           # React Mounting
+│   └── index.css          # Tailwind & Global Styles
+├── public/                # Static Assets
+├── vite.config.ts         # Vite Configuration
+├── tsconfig.json          # TypeScript Configuration
+└── GEMINI.md              # Project Mandates for AI Agents
 ```
 
-## Controls
+## 📜 License
 
-| Input | Action |
-|-------|--------|
-| `W` / `Arrow Up` | Move up |
-| `A` / `Arrow Left` | Move left |
-| `S` / `Arrow Down` | Move down |
-| `D` / `Arrow Right` | Move right |
-| `R` | New maze |
-| Swipe (mobile) | Move in swipe direction |
+Distributed under the Apache-2.0 License. See `LICENSE` for more information.
 
-## License
-
-Apache-2.0
+---
+*Created with ❤️ by [Ahaxzh](https://github.com/ahaxzh)*
