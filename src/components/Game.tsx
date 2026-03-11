@@ -168,7 +168,7 @@ const TEXTS: Record<Language, Record<string, string>> = {
     stats: 'STATS & MAP', controls: 'CONTROLS',
   },
   zh: {
-    title: 'AhaMaze', home: '首页', challenge: '挑战模式', leaderboard: '排行榜',
+    title: 'AhaMaze', home: '首页', challenge: '挑战', leaderboard: '排行榜',
     moves: '步数', level: '关卡', timer: '用时', difficulty: '难度',
     cleared: '通关成功', gaveUp: '已放弃', optimal: '最优步数', efficiency: '效率',
     solutionSteps: '正解步数',
@@ -183,6 +183,7 @@ const TEXTS: Record<Language, Record<string, string>> = {
 };
 
 type GameMode = 'Classic' | 'Challenge';
+type ActivePage = 'Classic' | 'Challenge' | 'Leaderboard';
 type Position = { x: number; y: number };
 
 // --- Canvas Maze Renderer ---
@@ -648,21 +649,28 @@ const KidsBackground = React.memo(function KidsBackground({ isDark }: { isDark: 
   const [elements, setElements] = useState<Array<{ id: number; emoji: string; left: number; duration: number; delay: number; size: number; rotate: number; rotateDuration: number; drift: number }>>([]);
 
   useEffect(() => {
-    // Increase elements up to 35, and constrain mainly to left 65% of the screen
-    const newElements = Array.from({ length: 35 }).map((_, i) => {
-      const visualSize = 14 + Math.random() * 24; // 14px - 38px
+    // Increase quantity significantly to make it feel dense and magical
+    const newElements = Array.from({ length: 70 }).map((_, i) => {
+      // Much larger visual sizes: 24px - 64px
+      const visualSize = 24 + Math.random() * 40; 
+      
+      // Determine if this emoji falls on the left side or right side (avoiding center maze entirely)
+      // Left channel: 0vw to 18vw
+      // Right channel: 82vw to 98vw
+      const isLeft = Math.random() > 0.5;
+      const left = isLeft ? Math.random() * 18 : 82 + Math.random() * 16;
+      
       return {
         id: i,
         emoji: KIDS_EMOJIS[Math.floor(Math.random() * KIDS_EMOJIS.length)].trim(),
-        left: Math.random() * 65,
-        // Make duration much longer (25s to 55s) for a gentle float
-        duration: 25 + Math.random() * 30,
-        // Spread the delay out further so they don't all appear at once
-        delay: -(Math.random() * 40),
+        left: left,
+        // Extremely slow and graceful float (35s to 70s)
+        duration: 35 + Math.random() * 35,
+        delay: -(Math.random() * 60),
         visualSize,
         rotate: Math.random() * 360,
-        rotateDuration: 12 + Math.random() * 20, // slower rotation
-        drift: Math.random() * 12 - 6
+        rotateDuration: 15 + Math.random() * 25, 
+        drift: Math.random() * 8 - 4
       };
     });
     setElements(newElements);
@@ -670,35 +678,39 @@ const KidsBackground = React.memo(function KidsBackground({ isDark }: { isDark: 
 
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none transition-colors duration-1000 ${isDark ? 'bg-gradient-to-br from-[#2e1025] via-[#4a1c40] to-[#2e1045]' : 'bg-gradient-to-br from-pink-200 via-pink-100 to-rose-200'}`}>
-      <div className="absolute inset-0 opacity-30" style={{
-        backgroundImage: `radial-gradient(${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.8)'} 4px, transparent 4px)`,
+      <div className="absolute inset-0 opacity-40" style={{
+        backgroundImage: `radial-gradient(${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)'} 4px, transparent 4px)`,
         backgroundSize: '40px 40px'
       }} />
       {elements.map((el) => {
-        // Render at a high fixed font size to ensure sharpness, then scale down
-        const renderSize = 64;
+        // Render large to keep crisp, then scale depending on visualSize
+        const renderSize = 80;
         const scale = el.visualSize / renderSize;
+        // Make them slightly semi-transparent so they blend beautifully with background and don't look completely flat
+        const opacity = isDark ? (0.4 + Math.random() * 0.4) : (0.5 + Math.random() * 0.4);
+
         return (
           <motion.div
             key={el.id}
-            initial={{ y: '-10vh', x: `${el.left}vw`, rotate: el.rotate, scale }}
+            initial={{ y: '-15vh', x: `${el.left}vw`, rotate: el.rotate, scale, opacity: 0 }}
             animate={{
-              y: '120vh',
+              y: '115vh',
               rotate: el.rotate + 360,
               x: [`${el.left}vw`, `${el.left + el.drift}vw`, `${el.left}vw`],
-              scale
+              scale,
+              opacity: [0, opacity, opacity, 0] // Fade in at top, fade out at bottom
             }}
             transition={{
               y: { duration: el.duration, repeat: Infinity, delay: el.delay, ease: "linear" },
               rotate: { duration: el.rotateDuration, repeat: Infinity, ease: "linear" },
-              x: { duration: el.duration * 0.8, repeat: Infinity, delay: el.delay, ease: "easeInOut" }
+              x: { duration: el.duration * 0.8, repeat: Infinity, delay: el.delay, ease: "easeInOut" },
+              opacity: { duration: el.duration, repeat: Infinity, delay: el.delay, ease: "linear", times: [0, 0.1, 0.9, 1] }
             }}
             style={{
               position: 'absolute',
               fontSize: renderSize,
               lineHeight: 1,
               top: 0,
-              opacity: isDark ? 0.8 : 0.9,
               transformOrigin: 'center center'
             }}
             className="drop-shadow-sm"
@@ -729,12 +741,12 @@ export default function Game() {
   const [lang, setLang] = useState<Language>('zh');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [gameMode, setGameMode] = useState<GameMode>('Classic');
+  const [activePage, setActivePage] = useState<ActivePage>('Classic');
   const [fogCountdown, setFogCountdown] = useState(10);
 
   // Local Player Identity & Leaderboard
   const [playerName, setPlayerName] = useState<string>('');
   const [showLogin, setShowLogin] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardMode, setLeaderboardMode] = useState<GameMode>('Classic');
   const [leaderboardDiff, setLeaderboardDiff] = useState<Difficulty>('Easy');
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
@@ -832,13 +844,14 @@ export default function Game() {
 
   // Force theme application for Kids mode
   useEffect(() => {
+    if (activePage !== 'Classic' && activePage !== 'Challenge') return;
     if (difficulty === 'Kids') {
       setTheme(appIsDark ? 'Starry' : 'Princess');
     } else if (theme === 'Princess' || theme === 'Starry') {
       // Revert if diff changed from Kids to something else
       setTheme(appIsDark ? 'Neon' : 'Light');
     }
-  }, [difficulty, appIsDark]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [difficulty, appIsDark, activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // Update body theme class to sync global dark mode toggles if needed
@@ -849,7 +862,19 @@ export default function Game() {
     }
   }, [appIsDark]);
 
-  useEffect(() => { startNewLevel(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [difficulty, gameMode]);
+  useEffect(() => { 
+    if (activePage === 'Classic' || activePage === 'Challenge') {
+      setGameMode(activePage);
+      startNewLevel(); 
+    } else if (activePage === 'Leaderboard') {
+      // Reload leaderboard data
+      try {
+        setLeaderboardData(JSON.parse(localStorage.getItem('ahamaze_records') || '[]'));
+      } catch (e) { setLeaderboardData([]); }
+      stopReplay();
+    }
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */ 
+  }, [difficulty, activePage]);
 
   // Fog countdown timer
   useEffect(() => {
@@ -1119,32 +1144,65 @@ export default function Game() {
             </span>
           </div>
 
-          {/* Center: Game Mode Toggle */}
+          {/* Center: Main App Router Tabs */}
           <div className={`hidden md:flex items-center p-1 rounded-xl mx-4 transition-colors duration-500 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
             <button
-              onClick={() => setGameMode('Classic')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${gameMode === 'Classic'
-                ? `bg-white shadow-sm text-slate-800 ${appIsDark && 'bg-slate-800 text-white'}`
+              onClick={() => setActivePage('Classic')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Classic'
+                ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
                 : `opacity-60 hover:opacity-100 ${t.text}`
                 }`}
             >
-              <Swords size={16} className={gameMode === 'Classic' ? t.text : ''} /> {text.challenge.replace('模式', '') || 'Classic'}
+              <Swords size={16} className={activePage === 'Classic' ? t.text : ''} /> {text.classicMode.replace('模式', '') || 'Classic'}
             </button>
             <button
-              onClick={() => setGameMode('Challenge')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${gameMode === 'Challenge'
+              onClick={() => setActivePage('Challenge')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Challenge'
                 ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
                 : `opacity-60 hover:opacity-100 ${t.text}`
                 }`}
             >
               <Trophy size={16} /> {text.challenge}
             </button>
+            <button
+              onClick={() => setActivePage('Leaderboard')}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Leaderboard'
+                ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
+                : `opacity-60 hover:opacity-100 ${t.text}`
+                }`}
+            >
+              <BarChart3 size={16} /> {text.leaderboard}
+            </button>
           </div>
 
-          {/* Center Mobile: Logo + Mode */}
-          <div className="flex md:hidden items-center gap-2">
-            <button onClick={() => setGameMode(gameMode === 'Classic' ? 'Challenge' : 'Classic')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${appIsDark ? 'bg-white/10 text-white' : 'bg-black/5 text-slate-900'}`}>
-              {gameMode === 'Challenge' ? <><Trophy size={14} className="text-amber-500" /> {text.challenge}</> : <><Swords size={14} /> Classic</>}
+          {/* Center Mobile: Simple Header Router */}
+          <div className={`md:hidden flex items-center p-1 rounded-xl mx-2 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
+             <button
+              onClick={() => setActivePage('Classic')}
+              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Classic'
+                ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
+                : `opacity-60 hover:opacity-100 ${t.text}`
+                }`}
+            >
+              <Swords size={14} className={activePage === 'Classic' ? t.text : ''} />
+            </button>
+            <button
+              onClick={() => setActivePage('Challenge')}
+              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Challenge'
+                ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
+                : `opacity-60 hover:opacity-100 ${t.text}`
+                }`}
+            >
+              <Trophy size={14} />
+            </button>
+            <button
+              onClick={() => setActivePage('Leaderboard')}
+              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Leaderboard'
+                ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
+                : `opacity-60 hover:opacity-100 ${t.text}`
+                }`}
+            >
+              <BarChart3 size={14} />
             </button>
           </div>
 
@@ -1156,39 +1214,30 @@ export default function Game() {
             <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
               <Globe size={18} />
             </button>
-            {/* Leaderboard Toggle */}
-            <button
-              onClick={() => {
-                try {
-                  setLeaderboardData(JSON.parse(localStorage.getItem('ahamaze_records') || '[]'));
-                } catch (e) { setLeaderboardData([]); }
-                setShowLeaderboard(true);
-              }}
-              className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-amber-400' : 'bg-amber-100 hover:bg-amber-200 text-amber-600'}`}
-            >
-              <BarChart3 size={18} />
-            </button>
             {/* User profile / Login */}
             <div
               onClick={() => setShowLogin(true)}
-              className={`hidden md:flex px-3 h-9 rounded-xl items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-opacity ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
+              className={`px-3 h-9 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-opacity ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
             >
               <User size={16} />
-              <span className="max-w-[80px] truncate">{playerName || (lang === 'zh' ? '游客' : 'Guest')}</span>
+              <span className="hidden md:inline-block max-w-[80px] truncate">{playerName || (lang === 'zh' ? '游客' : 'Guest')}</span>
             </div>
             {/* Mobile sidebar toggle */}
-            <button
-              onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-              className={`lg:hidden p-2 rounded-xl transition-all ${appIsDark ? 'bg-white/5 text-white' : 'bg-black/5 text-slate-900'}`}
-            >
-              <ChevronRightIcon size={18} className={showMobileSidebar ? 'rotate-180 transition-transform' : 'transition-transform'} />
-            </button>
+            {(activePage === 'Classic' || activePage === 'Challenge') && (
+              <button
+                onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                className={`lg:hidden p-2 rounded-xl transition-all ${appIsDark ? 'bg-white/5 text-white' : 'bg-black/5 text-slate-900'}`}
+              >
+                <ChevronRightIcon size={18} className={showMobileSidebar ? 'rotate-180 transition-transform' : 'transition-transform'} />
+              </button>
+            )}
           </div>
         </nav>
       </div>
 
       {/* ========== MAIN CONTENT (maze + sidebar) ========== */}
-      <div className="flex-1 flex overflow-hidden relative z-10 p-2 md:p-4 pb-4 gap-4 md:gap-6">
+      {(activePage === 'Classic' || activePage === 'Challenge') && (
+        <div className="flex-1 flex overflow-hidden relative z-10 p-2 md:p-4 pb-4 gap-4 md:gap-6">
 
         {/* LEFT: Maze Area (70% - 75%) */}
         <div className="flex-1 flex flex-col items-center justify-center relative min-w-0" ref={containerRef}>
@@ -1433,6 +1482,124 @@ export default function Game() {
           </div>
         </aside>
       </div>
+      )}
+
+      {/* ========== LEADERBOARD PAGE ========== */}
+      {activePage === 'Leaderboard' && (
+        <div className="flex-1 flex flex-col overflow-hidden relative z-10 p-4 md:p-8 max-w-5xl mx-auto w-full">
+          <div className={`flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden border ${appIsDark ? 'bg-slate-900/80 border-slate-700/50 backdrop-blur-md' : 'bg-white/90 border-slate-200/50 backdrop-blur-md'}`}>
+            <div className={`p-6 border-b flex items-center justify-between ${appIsDark ? 'border-slate-800' : 'border-slate-100'}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${appIsDark ? 'bg-amber-900/40 text-amber-400' : 'bg-amber-100 text-amber-500'}`}>
+                  <BarChart3 size={24} />
+                </div>
+                <div>
+                  <h3 className={`font-black tracking-tight text-2xl ${appIsDark ? 'text-white' : 'text-slate-900'}`}>
+                    {lang === 'zh' ? '排行榜' : 'Leaderboard'}
+                  </h3>
+                  <p className={`text-sm mt-0.5 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {lang === 'zh' ? '查看全球顶尖玩家的解谜记录' : 'Check out the puzzle solving records of top players worldwide'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className={`p-4 flex gap-3 border-b ${appIsDark ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
+              <select
+                value={leaderboardMode}
+                onChange={(e) => setLeaderboardMode(e.target.value as any)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-colors ${appIsDark ? 'bg-slate-800 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'}`}
+              >
+                <option value="Classic">{lang === 'zh' ? '经典模式' : 'Classic Mode'}</option>
+                <option value="Challenge">{lang === 'zh' ? '挑战模式' : 'Challenge Mode'}</option>
+              </select>
+              <select
+                value={leaderboardDiff}
+                onChange={(e) => setLeaderboardDiff(e.target.value as any)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-colors ${appIsDark ? 'bg-slate-800 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'}`}
+              >
+                <option value="Kids">{lang === 'zh' ? '儿童' : 'Kids'}</option>
+                <option value="Easy">{lang === 'zh' ? '简单' : 'Easy'}</option>
+                <option value="Medium">{lang === 'zh' ? '中等' : 'Medium'}</option>
+                <option value="Hard">{lang === 'zh' ? '困难' : 'Hard'}</option>
+              </select>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {(() => {
+                const filtered = leaderboardData
+                  .filter(r => r.difficulty === leaderboardDiff && r.mode === leaderboardMode)
+                  .sort((a, b) => a.time - b.time || a.moves - b.moves)
+                  .slice(0, 50);
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full opacity-50">
+                      <BarChart3 size={48} className={`mb-4 ${appIsDark ? 'text-slate-600' : 'text-slate-300'}`} />
+                      <div className={`text-lg font-bold ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {lang === 'zh' ? '暂无记录' : 'No records yet'}
+                      </div>
+                      <div className={`text-sm mt-1 ${appIsDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        {lang === 'zh' ? '快去挑战一局吧！' : 'Be the first to set a record!'}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {filtered.map((r, i) => (
+                      <div key={i} className={`flex flex-col p-4 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg ${
+                        i === 0 ? (appIsDark ? 'bg-amber-900/20 border-amber-500/30' : 'bg-amber-50 border-amber-200') : 
+                        i === 1 ? (appIsDark ? 'bg-slate-800/40 border-slate-600/50' : 'bg-slate-50 border-slate-200') :
+                        i === 2 ? (appIsDark ? 'bg-orange-900/20 border-orange-700/30' : 'bg-orange-50 border-orange-200') :
+                        (appIsDark ? 'bg-slate-800/20 border-white/5 hover:bg-slate-800/40' : 'bg-white border-slate-100 hover:bg-slate-50')
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
+                              i === 0 ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 
+                              i === 1 ? 'bg-slate-400 text-white shadow-md shadow-slate-400/20' : 
+                              i === 2 ? 'bg-orange-400 text-white shadow-md shadow-orange-400/20' : 
+                              (appIsDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-500')
+                            }`}>
+                              #{i + 1}
+                            </div>
+                            <div className={`font-black text-lg truncate max-w-[120px] ${appIsDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                              {r.name}
+                            </div>
+                          </div>
+                          <div className={`text-xs font-mono font-bold px-2 py-1 rounded-md ${appIsDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                            {new Date(r.date).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-end mt-auto pt-2 border-t border-black/5 dark:border-white/5">
+                          <div className="flex flex-col">
+                            <span className={`text-[10px] uppercase tracking-wider font-bold opacity-50 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>{text.timer}</span>
+                            <span className={`font-mono font-black text-xl ${appIsDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                              {formatTime(r.time)}
+                            </span>
+                          </div>
+                          <div className="flex flex-col text-right">
+                            <span className={`text-[10px] uppercase tracking-wider font-bold opacity-50 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>{text.moves}</span>
+                            <span className={`font-mono font-bold text-lg ${appIsDark ? 'text-indigo-300' : 'text-indigo-600'}`}>
+                              {r.moves}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ========== MODALS ========== */}
       <AnimatePresence>
         {showLogin && (
@@ -1506,100 +1673,6 @@ export default function Game() {
                     {lang === 'zh' ? '保存进入' : 'Save & Play'}
                   </button>
                 </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {showLeaderboard && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm`}
-            onClick={() => setShowLeaderboard(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`w-full max-w-md rounded-[24px] shadow-2xl overflow-hidden border flex flex-col max-h-[80vh] ${appIsDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className={`p-5 border-b flex items-center justify-between ${appIsDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className={appIsDark ? 'text-amber-400' : 'text-amber-500'} size={20} />
-                  <h3 className={`font-black tracking-tight text-lg ${appIsDark ? 'text-white' : 'text-slate-900'}`}>
-                    {lang === 'zh' ? '排行榜' : 'Leaderboard'}
-                  </h3>
-                </div>
-                <button onClick={() => setShowLeaderboard(false)} className={`p-1.5 rounded-lg ${appIsDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-black/5 text-slate-500'}`}>
-                  <VolumeX size={18} />
-                </button>
-              </div>
-
-              {/* Filters */}
-              <div className={`p-3 flex gap-2 border-b ${appIsDark ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50'}`}>
-                <select
-                  value={leaderboardMode}
-                  onChange={(e) => setLeaderboardMode(e.target.value as any)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-bold border outline-none ${appIsDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
-                >
-                  <option value="Classic">{lang === 'zh' ? '经典' : 'Classic'}</option>
-                  <option value="Challenge">{lang === 'zh' ? '挑战' : 'Challenge'}</option>
-                </select>
-                <select
-                  value={leaderboardDiff}
-                  onChange={(e) => setLeaderboardDiff(e.target.value as any)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-bold border outline-none ${appIsDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-800'}`}
-                >
-                  <option value="Kids">{lang === 'zh' ? '儿童' : 'Kids'}</option>
-                  <option value="Easy">{lang === 'zh' ? '简单' : 'Easy'}</option>
-                  <option value="Medium">{lang === 'zh' ? '中等' : 'Medium'}</option>
-                  <option value="Hard">{lang === 'zh' ? '困难' : 'Hard'}</option>
-                </select>
-              </div>
-
-              {/* List */}
-              <div className="flex-1 overflow-y-auto p-2">
-                {(() => {
-                  const filtered = leaderboardData
-                    .filter(r => r.difficulty === leaderboardDiff && r.mode === leaderboardMode)
-                    .sort((a, b) => a.time - b.time || a.moves - b.moves)
-                    .slice(0, 50);
-
-                  if (filtered.length === 0) {
-                    return (
-                      <div className={`py-12 text-center text-sm font-mono ${appIsDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {lang === 'zh' ? '暂无记录' : 'No records yet'}
-                      </div>
-                    );
-                  }
-
-                  return filtered.map((r, i) => (
-                    <div key={i} className={`flex items-center justify-between p-3 rounded-xl mb-1 ${i === 0 ? (appIsDark ? 'bg-amber-900/20' : 'bg-amber-50') : (appIsDark ? 'hover:bg-white/5' : 'hover:bg-slate-50')
-                      }`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-6 text-center font-black ${i === 0 ? 'text-amber-500' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-orange-400' : (appIsDark ? 'text-slate-600' : 'text-slate-400')}`}>
-                          #{i + 1}
-                        </div>
-                        <div>
-                          <div className={`font-bold text-sm ${appIsDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            {r.name.substring(0, 15)}
-                          </div>
-                          <div className={`text-[10px] font-mono opacity-60 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                            {new Date(r.date).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`font-mono font-bold ${appIsDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                          {formatTime(r.time)}
-                        </div>
-                        <div className={`text-[10px] font-mono ${appIsDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                          {r.moves} {lang === 'zh' ? '步' : 'steps'}
-                        </div>
-                      </div>
-                    </div>
-                  ));
-                })()}
               </div>
             </motion.div>
           </motion.div>
