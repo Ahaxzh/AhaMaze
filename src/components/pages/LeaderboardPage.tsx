@@ -38,9 +38,15 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
   if (top3[2]) podiumOrder.push({ ...top3[2], rank: 3 });
 
   const getRankColor = (rank: number) => {
-    if (rank === 1) return 'from-yellow-300 via-amber-400 to-yellow-600 text-yellow-900 shadow-yellow-500/30';
-    if (rank === 2) return 'from-slate-200 via-slate-300 to-slate-400 text-slate-800 shadow-slate-400/30';
-    if (rank === 3) return 'from-orange-300 via-orange-400 to-orange-600 text-orange-950 shadow-orange-500/30';
+    if (appIsDark) {
+      if (rank === 1) return 'from-yellow-500/80 via-amber-600/80 to-yellow-700/80 shadow-yellow-900/40 border-yellow-500/30';
+      if (rank === 2) return 'from-slate-400/80 via-slate-500/80 to-slate-600/80 shadow-slate-900/40 border-slate-400/30';
+      if (rank === 3) return 'from-orange-500/80 via-orange-600/80 to-orange-700/80 shadow-orange-900/40 border-orange-500/30';
+    } else {
+      if (rank === 1) return 'from-yellow-300 via-amber-400 to-yellow-500 text-yellow-900 shadow-yellow-500/30 border-yellow-200/50';
+      if (rank === 2) return 'from-slate-200 via-slate-300 to-slate-400 text-slate-800 shadow-slate-400/30 border-slate-100/50';
+      if (rank === 3) return 'from-orange-300 via-orange-400 to-orange-500 text-orange-950 shadow-orange-500/30 border-orange-200/50';
+    }
     return '';
   };
 
@@ -128,34 +134,37 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
             <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto flex flex-col gap-10 h-full">
               
               {/* Podium for Top 3 */}
-              <div className="flex items-end justify-center gap-2 md:gap-6 min-h-[220px] pt-8">
+              <div className="flex items-end justify-center gap-3 md:gap-6 min-h-[240px] pt-12 pb-4">
                 {podiumOrder.map((entry, idx) => {
                   const isFirst = entry.rank === 1;
-                  const heightClass = isFirst ? 'h-40 md:h-48' : entry.rank === 2 ? 'h-32 md:h-40' : 'h-28 md:h-32';
-                  
+                  const heightClass = isFirst ? 'h-44 md:h-52' : entry.rank === 2 ? 'h-36 md:h-44' : 'h-32 md:h-36';
+                  const rankColor = getRankColor(entry.rank);
+
                   return (
-                    <motion.div key={idx} variants={itemVariants} className={`relative flex flex-col items-center flex-1 max-w-[180px]`}>
+                    <motion.div key={`${entry.name}-${entry.rank}`} variants={itemVariants} className={`relative flex flex-col items-center flex-1 max-w-[160px] md:max-w-[200px]`}>
                       {/* Avatar / Crown */}
-                      <div className={`absolute -top-12 z-20 flex flex-col items-center ${isFirst ? '-top-14 scale-110' : ''}`}>
-                        {isFirst && <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 2 }}><Trophy size={32} className="text-yellow-400 drop-shadow-lg mb-1" fill="currentColor"/></motion.div>}
-                        {entry.rank === 2 && <Medal size={28} className="text-slate-300 drop-shadow-md mb-1" fill="currentColor" />}
-                        {entry.rank === 3 && <Medal size={28} className="text-orange-400 drop-shadow-md mb-1" fill="currentColor" />}
-                        <div className={`px-3 py-1 bg-black/80 backdrop-blur-md text-white text-xs font-bold rounded-full shadow-xl truncate max-w-[100px] md:max-w-[120px] border border-white/10`}>
+                      <div className={`absolute -top-14 z-20 flex flex-col items-center ${isFirst ? '-top-16 scale-110' : ''}`}>
+                        {isFirst && <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2.5 }}><Trophy size={36} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)] mb-2" fill="currentColor"/></motion.div>}
+                        {entry.rank === 2 && <Medal size={30} className="text-slate-300 drop-shadow-md mb-2" fill="currentColor" />}
+                        {entry.rank === 3 && <Medal size={30} className="text-orange-400 drop-shadow-md mb-2" fill="currentColor" />}
+                        <div className={`px-4 py-1.5 bg-slate-900/90 backdrop-blur-md text-white text-xs font-bold rounded-full shadow-lg truncate max-w-[100px] md:max-w-[130px] border border-white/20 relative`}>
                           {entry.name}
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900/90 border-r border-b border-white/20 rotate-45"></div>
                         </div>
                       </div>
 
                       {/* Pedestal */}
-                      <div className={`w-full ${heightClass} rounded-t-2xl shadow-xl flex flex-col items-center justify-end p-4 pb-6 bg-gradient-to-b ${getRankColor(entry.rank)} transition-transform hover:scale-[1.02] cursor-default border-t border-white/40 relative overflow-hidden`}>
-                        <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity"></div>
-                        <div className="flex flex-col items-center z-10">
-                          <span className="font-mono font-black text-2xl md:text-3xl drop-shadow-sm">{formatTime(entry.time)}</span>
-                          <div className="flex items-center gap-1 opacity-80 mt-1">
+                      <div className={`w-full ${heightClass} rounded-t-3xl shadow-2xl flex flex-col items-center justify-center p-4 pb-2 bg-gradient-to-b ${rankColor} transition-transform hover:scale-[1.03] cursor-default border-t-2 relative overflow-hidden backdrop-blur-sm`}>
+                        <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className={`flex flex-col items-center z-10 ${appIsDark ? 'text-white drop-shadow-md' : ''}`}>
+                          <span className="font-mono font-black text-3xl md:text-4xl tracking-tighter">{formatTime(entry.time)}</span>
+                          <div className="flex items-center gap-1.5 opacity-80 mt-2 bg-black/10 px-3 py-1 rounded-full backdrop-blur-md">
                             <Footprints size={12} />
-                            <span className="font-bold text-sm tracking-wide">{entry.moves}</span>
+                            <span className="font-bold text-xs tracking-wider">{entry.moves}</span>
                           </div>
                         </div>
-                        <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-white/20 to-transparent"></div>
+                        {/* Glass reflection highlight */}
+                        <div className="absolute top-0 left-0 right-0 h-full bg-gradient-to-b from-white/30 via-transparent to-transparent opacity-60 pointer-events-none rounded-t-3xl"></div>
                       </div>
                     </motion.div>
                   );
@@ -173,8 +182,11 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
                   </div>
                   {restList.map((entry, idx) => {
                     const rank = idx + 4;
+                    // Fix: Use a unique key based on name and date to prevent React recycling DOM nodes during animation,
+                    // which causes the grey flashing background artifacts.
+                    const uniqueKey = `${entry.name}-${entry.time}-${entry.date}`;
                     return (
-                      <motion.div key={idx} variants={itemVariants} className={`flex items-center px-4 py-3 md:py-4 rounded-2xl border transition-colors ${appIsDark ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/80' : 'bg-white border-slate-100 hover:bg-slate-50 shadow-sm'}`}>
+                      <motion.div key={uniqueKey} variants={itemVariants} className={`flex items-center px-4 py-3 md:py-4 rounded-2xl border transition-colors ${appIsDark ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/80' : 'bg-white border-slate-100 hover:bg-slate-50 shadow-sm'}`}>
                         <div className={`w-12 text-center font-mono font-bold text-lg opacity-40 ${appIsDark ? 'text-white' : 'text-slate-900'}`}>{rank}</div>
                         <div className={`flex-1 font-bold text-base truncate pr-4 ${appIsDark ? 'text-slate-200' : 'text-slate-800'}`}>{entry.name}</div>
                         <div className={`w-24 text-right font-mono font-bold ${appIsDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatTime(entry.time)}</div>
