@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cell, Position } from '../../utils/maze';
+import { Cell } from '../../utils/maze';
+import { Position } from '../../types/game';
 import { Theme, Difficulty, GameMode, Language } from '../../types/game';
 import { THEME_CONFIGS } from '../../constants/game';
 

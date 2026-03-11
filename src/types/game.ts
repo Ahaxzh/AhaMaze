@@ -1,5 +1,5 @@
 export type Difficulty = 'Kids' | 'Easy' | 'Medium' | 'Hard';
-export type Theme = 'Light' | 'Dark' | 'Neon' | 'Matrix' | 'Valentine' | 'Retro' | 'Ocean' | 'Forest' | 'Cyberpunk' | 'Sunset' | 'Snow' | 'Space' | 'Desert' | 'Volcano' | 'Candy' | 'Steampunk' | 'Princess' | 'Starry';
+export type Theme = 'Princess' | 'Starry' | 'Neon' | 'Retro' | 'Light' | 'Sunset' | 'Ocean' | 'Rose' | 'Amber' | 'Midnight';
 export type Language = 'en' | 'zh';
 export type GameMode = 'Classic' | 'Challenge';
 export type ActivePage = 'Classic' | 'Challenge' | 'Leaderboard';

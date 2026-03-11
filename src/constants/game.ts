@@ -15,89 +15,137 @@ export const MAZE_DIFFICULTY_PARAMS: Record<Difficulty, { loopFactor: number, ch
   Hard: { loopFactor: 0.0, challengePadding: 2 },  // Strict traditional maze, only one path
 };
 
-export const THEME_CONFIGS: Record<Theme, {
+export interface ThemeColors {
   bg: string;
-  wallColor: string;
-  playerColor: string;
-  endColor: string;
-  trailColor: string;
+  bgRaw: string;
   text: string;
+  wallColor: string;
+  cellBgColor: string;
+  playerColor: string;
+  trailColor: string;
+  endColor: string;
+  accent: string;
   gradient: string;
-  shadow?: string;
-  glow?: boolean;
-}> = {
-  Light: {
-    bg: 'bg-slate-50', wallColor: '#334155', playerColor: '#3b82f6', endColor: '#ef4444', trailColor: '#93c5fd',
-    text: 'text-slate-800', gradient: 'from-blue-500 to-indigo-500', shadow: 'rgba(0,0,0,0.1)'
+  startGlow: string;
+  cornerDot: string;
+  containerBg: string;
+  containerBorder: string;
+  swatch: string;
+  textureSvg: string;
+  ambience: 'dark' | 'light';
+}
+
+export const THEME_CONFIGS: Record<Theme, ThemeColors> = {
+  Princess: {
+    bg: 'bg-[#fff0f5]', bgRaw: '#fff0f5', text: 'text-pink-600',
+    wallColor: '#fb7185', cellBgColor: 'rgba(255, 255, 255, 0.7)',
+    playerColor: '#ff27a0', trailColor: '#fb7185', endColor: '#f43f5e',
+    accent: 'text-rose-500', gradient: 'from-pink-400 via-rose-400 to-fuchsia-400',
+    startGlow: 'rgba(251, 113, 133, 0.2)', cornerDot: 'transparent',
+    containerBg: 'bg-white/60', containerBorder: 'border-pink-200/60',
+    swatch: '#fb7185',
+    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><g fill="rgba(251,113,133,0.12)"><circle cx="30" cy="30" r="2.5"/><circle cx="0" cy="0" r="1.5"/><circle cx="60" cy="60" r="1.5"/><circle cx="0" cy="60" r="1.5"/><circle cx="60" cy="0" r="1.5"/></g></svg>`,
+    ambience: 'light',
   },
-  Dark: {
-    bg: 'bg-slate-950', wallColor: '#94a3b8', playerColor: '#60a5fa', endColor: '#f87171', trailColor: '#1e3a8a',
-    text: 'text-slate-200', gradient: 'from-slate-700 to-slate-600', shadow: 'rgba(255,255,255,0.05)'
+  Starry: {
+    bg: 'bg-[#0f0c29]', bgRaw: '#0f0c29', text: 'text-indigo-200',
+    wallColor: '#8b5cf6', cellBgColor: 'rgba(15, 23, 42, 0.5)',
+    playerColor: '#fcd34d', trailColor: '#c084fc', endColor: '#fde047',
+    accent: 'text-purple-400', gradient: 'from-indigo-900 via-purple-900 to-slate-900',
+    startGlow: 'rgba(252, 211, 77, 0.2)', cornerDot: 'transparent',
+    containerBg: 'bg-[#1e1b4b]/60', containerBorder: 'border-indigo-500/30',
+    swatch: '#8b5cf6',
+    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><g fill="rgba(192,132,252,0.1)"><circle cx="15" cy="15" r="1"/><circle cx="45" cy="45" r="1.5"/><path d="M30 5 L31 10 L36 11 L31 12 L30 17 L29 12 L24 11 L29 10 Z" transform="translate(-15, 20) scale(0.5)"/></g></svg>`,
+    ambience: 'dark',
   },
   Neon: {
-    bg: 'bg-black', wallColor: '#c026d3', playerColor: '#2dd4bf', endColor: '#facc15', trailColor: '#0f766e',
-    text: 'text-fuchsia-400', gradient: 'from-fuchsia-600 to-pink-600', shadow: '#c026d3', glow: true
-  },
-  Matrix: {
-    bg: 'bg-zinc-950', wallColor: '#15803d', playerColor: '#22c55e', endColor: '#dc2626', trailColor: '#064e3b',
-    text: 'text-green-500', gradient: 'from-green-600 to-emerald-800', shadow: '#15803d', glow: true
-  },
-  Valentine: {
-    bg: 'bg-rose-50', wallColor: '#be123c', playerColor: '#fb7185', endColor: '#e11d48', trailColor: '#ffe4e6',
-    text: 'text-rose-900', gradient: 'from-rose-400 to-pink-500', shadow: 'rgba(225,29,72,0.2)'
+    bg: 'bg-slate-950', bgRaw: '#020617', text: 'text-slate-100',
+    wallColor: '#334155', cellBgColor: 'rgba(15, 23, 42, 0.4)',
+    playerColor: '#06b6d4', trailColor: '#06b6d4', endColor: '#ec4899',
+    accent: 'text-cyan-400', gradient: 'from-cyan-400 via-blue-500 to-purple-600',
+    startGlow: 'rgba(6, 182, 212, 0.25)', cornerDot: 'rgba(100, 116, 139, 0.6)',
+    containerBg: 'bg-slate-900/60', containerBorder: 'border-white/10',
+    swatch: '#06b6d4',
+    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0v60" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="60" height="60" fill="url(#g)"/></svg>`,
+    ambience: 'dark',
   },
   Retro: {
-    bg: 'bg-amber-50', wallColor: '#b45309', playerColor: '#d97706', endColor: '#16a34a', trailColor: '#fef3c7',
-    text: 'text-amber-900', gradient: 'from-amber-600 to-orange-700', shadow: 'rgba(180,83,9,0.3)'
+    bg: 'bg-[#0f172a]', bgRaw: '#0f172a', text: 'text-emerald-400',
+    wallColor: '#059669', cellBgColor: 'rgba(6, 78, 59, 0.15)',
+    playerColor: '#10b981', trailColor: '#10b981', endColor: '#fbbf24',
+    accent: 'text-emerald-400', gradient: 'from-emerald-400 to-teal-500',
+    startGlow: 'rgba(16, 185, 129, 0.25)', cornerDot: 'rgba(52, 211, 153, 0.4)',
+    containerBg: 'bg-[#064e3b]/30', containerBorder: 'border-emerald-900/50',
+    swatch: '#10b981',
+    textureSvg: `<svg width="4" height="4" xmlns="http://www.w3.org/2000/svg"><rect width="4" height="2" fill="rgba(0,0,0,0.2)"/></svg>`,
+    ambience: 'dark',
   },
-  Ocean: {
-    bg: 'bg-cyan-50', wallColor: '#0369a1', playerColor: '#06b6d4', endColor: '#0ea5e9', trailColor: '#cffafe',
-    text: 'text-cyan-900', gradient: 'from-cyan-500 to-blue-600', shadow: 'rgba(6,182,212,0.2)'
-  },
-  Forest: {
-    bg: 'bg-emerald-50', wallColor: '#065f46', playerColor: '#10b981', endColor: '#84cc16', trailColor: '#d1fae5',
-    text: 'text-emerald-900', gradient: 'from-emerald-600 to-green-700', shadow: 'rgba(16,185,129,0.2)'
-  },
-  Cyberpunk: {
-    bg: 'bg-slate-900', wallColor: '#eab308', playerColor: '#06b6d4', endColor: '#ec4899', trailColor: '#4c1d95',
-    text: 'text-yellow-400', gradient: 'from-yellow-400 to-pink-600', shadow: '#eab308', glow: true
+  Light: {
+    bg: 'bg-slate-50', bgRaw: '#f8fafc', text: 'text-slate-800',
+    wallColor: '#cbd5e1', cellBgColor: '#ffffff',
+    playerColor: '#3b82f6', trailColor: '#3b82f6', endColor: '#ef4444',
+    accent: 'text-blue-600', gradient: 'from-blue-500 to-violet-500',
+    startGlow: 'rgba(59, 130, 246, 0.15)', cornerDot: 'transparent',
+    containerBg: 'bg-white/70', containerBorder: 'border-white/60',
+    swatch: '#3b82f6',
+    textureSvg: `<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="1" fill="rgba(148,163,184,0.15)"/></svg>`,
+    ambience: 'light',
   },
   Sunset: {
-    bg: 'bg-orange-50', wallColor: '#ea580c', playerColor: '#f97316', endColor: '#eab308', trailColor: '#ffedd5',
-    text: 'text-orange-900', gradient: 'from-orange-500 to-yellow-500', shadow: 'rgba(234,88,12,0.2)'
+    bg: 'bg-[#1a0b0e]', bgRaw: '#1a0b0e', text: 'text-orange-50',
+    wallColor: '#9a3412', cellBgColor: 'rgba(67, 20, 7, 0.5)',
+    playerColor: '#f97316', trailColor: '#ea580c', endColor: '#e11d48',
+    accent: 'text-orange-400', gradient: 'from-orange-400 via-rose-500 to-purple-600',
+    startGlow: 'rgba(249, 115, 22, 0.2)', cornerDot: 'rgba(251, 146, 60, 0.4)',
+    containerBg: 'bg-[#2a1215]/60', containerBorder: 'border-rose-900/30',
+    swatch: '#f97316',
+    textureSvg: `<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M0 40L40 0M-10 10L10 -10M30 50L50 30" stroke="rgba(251,146,60,0.05)" stroke-width="1.5"/></svg>`,
+    ambience: 'dark',
   },
-  Snow: {
-    bg: 'bg-slate-100', wallColor: '#94a3b8', playerColor: '#38bdf8', endColor: '#818cf8', trailColor: '#e0f2fe',
-    text: 'text-sky-900', gradient: 'from-sky-300 to-blue-400', shadow: 'rgba(148,163,184,0.3)'
+  Ocean: {
+    bg: 'bg-[#041e3a]', bgRaw: '#041e3a', text: 'text-sky-50',
+    wallColor: '#0284c7', cellBgColor: 'rgba(8, 47, 73, 0.5)',
+    playerColor: '#0ea5e9', trailColor: '#0284c7', endColor: '#8b5cf6',
+    accent: 'text-sky-400', gradient: 'from-sky-300 via-blue-500 to-indigo-500',
+    startGlow: 'rgba(14, 165, 233, 0.2)', cornerDot: 'rgba(56, 189, 248, 0.4)',
+    containerBg: 'bg-[#082f49]/60', containerBorder: 'border-sky-800/30',
+    swatch: '#0ea5e9',
+    textureSvg: `<svg width="100" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q25 0 50 10 T100 10" fill="none" stroke="rgba(56,189,248,0.05)" stroke-width="1.5"/></svg>`,
+    ambience: 'dark',
   },
-  Space: {
-    bg: 'bg-indigo-950', wallColor: '#6366f1', playerColor: '#a855f7', endColor: '#ec4899', trailColor: '#312e81',
-    text: 'text-indigo-300', gradient: 'from-indigo-600 to-purple-800', shadow: '#6366f1', glow: true
+  Rose: {
+    bg: 'bg-[#1e0a13]', bgRaw: '#1e0a13', text: 'text-pink-50',
+    wallColor: '#be185d', cellBgColor: 'rgba(80, 7, 36, 0.4)',
+    playerColor: '#ec4899', trailColor: '#db2777', endColor: '#a855f7',
+    accent: 'text-pink-400', gradient: 'from-pink-400 via-purple-500 to-indigo-500',
+    startGlow: 'rgba(236, 72, 153, 0.2)', cornerDot: 'rgba(244, 114, 182, 0.4)',
+    containerBg: 'bg-[#2e101d]/60', containerBorder: 'border-pink-900/30',
+    swatch: '#ec4899',
+    textureSvg: `<svg width="30" height="30" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(244,114,182,0.05)" stroke-width="1"/></svg>`,
+    ambience: 'dark',
   },
-  Desert: {
-    bg: 'bg-yellow-50', wallColor: '#ca8a04', playerColor: '#eab308', endColor: '#f97316', trailColor: '#fef9c3',
-    text: 'text-yellow-900', gradient: 'from-yellow-600 to-orange-500', shadow: 'rgba(202,138,4,0.2)'
+  Amber: {
+    bg: 'bg-[#fffbeb]', bgRaw: '#fffbeb', text: 'text-amber-900',
+    wallColor: '#d97706', cellBgColor: '#ffffff',
+    playerColor: '#f59e0b', trailColor: '#d97706', endColor: '#ef4444',
+    accent: 'text-amber-600', gradient: 'from-amber-400 via-orange-500 to-red-500',
+    startGlow: 'rgba(245, 158, 11, 0.15)', cornerDot: 'transparent',
+    containerBg: 'bg-white/70', containerBorder: 'border-white/60',
+    swatch: '#f59e0b',
+    textureSvg: `<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M0 24L24 0M-6 6L6 -6M18 30L30 18" stroke="rgba(217,119,6,0.05)" stroke-width="1"/></svg>`,
+    ambience: 'light',
   },
-  Volcano: {
-    bg: 'bg-red-950', wallColor: '#ef4444', playerColor: '#f97316', endColor: '#fbbf24', trailColor: '#7f1d1d',
-    text: 'text-red-400', gradient: 'from-red-600 to-orange-700', shadow: '#ef4444', glow: true
+  Midnight: {
+    bg: 'bg-[#020617]', bgRaw: '#020617', text: 'text-indigo-50',
+    wallColor: '#4338ca', cellBgColor: 'rgba(17, 24, 39, 0.6)',
+    playerColor: '#6366f1', trailColor: '#4f46e5', endColor: '#10b981',
+    accent: 'text-indigo-400', gradient: 'from-indigo-400 via-purple-400 to-emerald-400',
+    startGlow: 'rgba(99, 102, 241, 0.2)', cornerDot: 'rgba(129, 140, 248, 0.4)',
+    containerBg: 'bg-[#0f172a]/60', containerBorder: 'border-indigo-900/30',
+    swatch: '#6366f1',
+    textureSvg: `<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="24" width="2" height="2" rx="1" fill="rgba(129,140,248,0.1)"/></svg>`,
+    ambience: 'dark',
   },
-  Candy: {
-    bg: 'bg-pink-50', wallColor: '#ec4899', playerColor: '#d946ef', endColor: '#06b6d4', trailColor: '#fce7f3',
-    text: 'text-pink-900', gradient: 'from-pink-400 to-fuchsia-500', shadow: 'rgba(236,72,153,0.2)'
-  },
-  Steampunk: {
-    bg: 'bg-stone-900', wallColor: '#a8a29e', playerColor: '#d6d3d1', endColor: '#fb923c', trailColor: '#44403c',
-    text: 'text-stone-300', gradient: 'from-stone-600 to-neutral-800', shadow: '#a8a29e', glow: true
-  },
-  Princess: { // Exclusively for Kids Mode (Light)
-    bg: 'bg-pink-50', wallColor: '#f472b6', playerColor: '#fb7185', endColor: '#e879f9', trailColor: '#fce7f3',
-    text: 'text-pink-600', gradient: 'from-pink-300 to-rose-300', shadow: 'rgba(244,114,182,0.3)'
-  },
-  Starry: { // Exclusively for Kids Mode (Dark)
-    bg: 'bg-purple-950', wallColor: '#c084fc', playerColor: '#60a5fa', endColor: '#f472b6', trailColor: '#4c1d95',
-    text: 'text-purple-300', gradient: 'from-purple-500 to-blue-500', shadow: '#c084fc', glow: true
-  }
 };
 
 export const TEXTS: Record<Language, any> = {
