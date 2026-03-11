@@ -21,36 +21,44 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
   const isKidsMode = difficulty === 'Kids';
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || maze.length === 0) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  // Offscreen render targets for caching static layers to reach 120fps
+  const bgCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fogCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    // Offset by 0.5px to properly render sharp 1px lines without anti-aliasing edge blur
+  // 1. Static Layout Cache (Walls, Background, Start/End Markers)
+  // Only re-runs when the maze structure or theme actually changes
+  useEffect(() => {
+    if (maze.length === 0 || pixelWidth === 0 || pixelHeight === 0) return;
+    
+    if (!bgCanvasRef.current) {
+      bgCanvasRef.current = document.createElement('canvas');
+    }
+    const bgCanvas = bgCanvasRef.current;
+    bgCanvas.width = pixelWidth * dpr;
+    bgCanvas.height = pixelHeight * dpr;
+    
+    const ctx = bgCanvas.getContext('2d');
+    if (!ctx) return;
+    
     ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
     ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
 
-    ctx.fillStyle = t.cellBgColor || t.bg; // Fallback to bg if cellBgColor is not defined
+    ctx.fillStyle = t.cellBgColor || t.bg;
     ctx.fillRect(0, 0, pixelWidth, pixelHeight);
 
-    // Dynamic sizing based on cellSize
     const glowOffset = cellSize * 0.1;
     const glowSize = cellSize * 0.8;
     ctx.fillStyle = t.startGlow || 'rgba(0,0,0,0.1)';
     ctx.fillRect(glowOffset, glowOffset, glowSize, glowSize);
 
-    // Kids mode: Animated Heart as end goal
     if (isKidsMode) {
       ctx.save();
       const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
       const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
       ctx.translate(endCx - cellSize * 0.25, endCy - cellSize * 0.25);
-      // scale up the svg heart slightly
       ctx.scale(cellSize * 0.05, cellSize * 0.05);
       ctx.fillStyle = t.endColor;
       ctx.beginPath();
-      // standard heart path
       ctx.moveTo(5, 3);
       ctx.bezierCurveTo(5, 3, 4.5, 0, 2.5, 0); ctx.bezierCurveTo(0, 0, 0, 3, 0, 3);
       ctx.bezierCurveTo(0, 6, 5, 9, 5, 9);
@@ -67,21 +75,93 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       ctx.fill();
     }
 
+    ctx.strokeStyle = t.wallColor;
+    const baseLineWidth = Math.max(1, cellSize * 0.08);
+    ctx.lineWidth = baseLineWidth;
+    ctx.lineCap = 'square';
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    
+    const rows = maze.length;
+    const cols = maze[0]?.length ?? 0;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const cell = maze[y][x];
+        const px = x * cellSize;
+        const py = y * cellSize;
+        if (cell.walls.top) { ctx.moveTo(px, py); ctx.lineTo(px + cellSize, py); }
+        if (cell.walls.right) { ctx.moveTo(px + cellSize, py); ctx.lineTo(px + cellSize, py + cellSize); }
+        if (cell.walls.bottom) { ctx.moveTo(px, py + cellSize); ctx.lineTo(px + cellSize, py + cellSize); }
+        if (cell.walls.left) { ctx.moveTo(px, py); ctx.lineTo(px, py + cellSize); }
+      }
+    }
+    ctx.stroke();
+
+    ctx.lineWidth = baseLineWidth;
+    const offset = baseLineWidth / 2;
+    ctx.strokeRect(offset, offset, pixelWidth - baseLineWidth, pixelHeight - baseLineWidth);
+
+    if (t.cornerDot && t.cornerDot !== 'transparent') {
+      ctx.fillStyle = t.cornerDot;
+      const dotSize = Math.max(0.5, cellSize * 0.06);
+      for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+          if ((x === 0 || x === cols) && (y === 0 || y === rows)) continue;
+          ctx.fillRect(x * cellSize - dotSize / 2, y * cellSize - dotSize / 2, dotSize, dotSize);
+        }
+      }
+    }
+  }, [maze, cellSize, mazeWidth, mazeHeight, theme, t, dpr, pixelWidth, pixelHeight, isKidsMode]);
+
+  // 2. Initialize or resize Fog Canvas once per maze size change
+  // Prevents horrible GC pauses caused by creating a <canvas> 60+ times a second
+  useEffect(() => {
+    if (gameMode !== 'Challenge') return;
+    if (pixelWidth === 0 || pixelHeight === 0) return;
+    
+    if (!fogCanvasRef.current) {
+        fogCanvasRef.current = document.createElement('canvas');
+    }
+    fogCanvasRef.current.width = pixelWidth;
+    fogCanvasRef.current.height = pixelHeight;
+  }, [pixelWidth, pixelHeight, gameMode]);
+
+  // 3. Main Fast-Render Loop (Draws cached objects and dynamic paths/fog)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || maze.length === 0) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // We do NOT clear the whole canvas if we can avoid it, but we need to redraw
+    // everything. However, using drawImage is extremely fast compared to loops.
+    ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
+    ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+
+    // Blit the static background (walls, colors, ends) in exactly 1 draw call
+    if (bgCanvasRef.current) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to draw cached image 1:1
+        ctx.drawImage(bgCanvasRef.current, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr + 1.5, pixelHeight * dpr + 1.5);
+        ctx.restore();
+    }
+
+    // Dynamic Paths
     const pathToDraw = replayIndex >= 0 ? visitedPath.slice(0, replayIndex + 1) : visitedPath;
     if (pathToDraw.length > 1) {
       if (isKidsMode) {
-        // Kids mode rainbow trail
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = Math.max(2, cellSize * 0.35);
+        ctx.beginPath();
         for (let i = 1; i < pathToDraw.length; i++) {
-          ctx.beginPath();
           const hue = (i * 12) % 360;
           ctx.strokeStyle = `hsla(${hue}, 80%, 65%, 0.6)`;
           const p1 = pathToDraw[i - 1]; const p2 = pathToDraw[i];
           ctx.moveTo(p1.x * cellSize + cellSize / 2, p1.y * cellSize + cellSize / 2);
           ctx.lineTo(p2.x * cellSize + cellSize / 2, p2.y * cellSize + cellSize / 2);
           ctx.stroke();
+          ctx.beginPath(); // Next segment
         }
       } else {
         ctx.beginPath();
@@ -131,129 +211,71 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       }
     }
 
-    ctx.strokeStyle = t.wallColor;
-    const baseLineWidth = Math.max(1, cellSize * 0.08);
-    ctx.lineWidth = baseLineWidth;
-    // Use 'square' to extend the lines slightly to cover corners cleanly
-    ctx.lineCap = 'square';
-    ctx.lineJoin = 'miter';
-    ctx.beginPath();
-    const rows = maze.length;
-    const cols = maze[0]?.length ?? 0;
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const cell = maze[y][x];
-        const px = x * cellSize;
-        const py = y * cellSize;
-        if (cell.walls.top) { ctx.moveTo(px, py); ctx.lineTo(px + cellSize, py); }
-        if (cell.walls.right) { ctx.moveTo(px + cellSize, py); ctx.lineTo(px + cellSize, py + cellSize); }
-        if (cell.walls.bottom) { ctx.moveTo(px, py + cellSize); ctx.lineTo(px + cellSize, py + cellSize); }
-        if (cell.walls.left) { ctx.moveTo(px, py); ctx.lineTo(px, py + cellSize); }
-      }
-    }
-    ctx.stroke();
+    // Dynamic Fog
+    if (gameMode === 'Challenge' && fogCountdown === 0 && !!fogCanvasRef.current) {
+        // We use destination-in on the main canvas so the fog cutouts reveal the maze underneath
+        // But the fog needs an opaque layer over everything else. 
+        // 1. We draw an opaque rect matching the ambient color.
+        // Wait, if it's over everything, we can just do traditional approach but use the persistent fogCanvas.
+        
+        const fogCanvas = fogCanvasRef.current;
+        const ftx = fogCanvas.getContext('2d');
+        if (ftx) {
+            // Fill fog with the dark/light ambiance color
+            ftx.globalCompositeOperation = 'source-over';
+            ftx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
+            if (theme === 'Princess') ftx.fillStyle = 'rgba(255, 240, 245, 0.98)';
+            ftx.fillRect(0, 0, pixelWidth, pixelHeight);
 
-    // Draw an explicit outer border to ensure outer walls don't appear thinner due to stroke clipping
-    ctx.lineWidth = baseLineWidth;
-    // Adjust by half the line width so the stroke bounds precisely to the edge of the pixelWidth/Height
-    const offset = baseLineWidth / 2;
-    ctx.strokeRect(offset, offset, pixelWidth - baseLineWidth, pixelHeight - baseLineWidth);
+            // Carve out holes with destination-out
+            ftx.globalCompositeOperation = 'destination-out';
+            ftx.filter = `blur(${cellSize * 1.2}px)`;
+            
+            // Important: destination-out makes pixels transparent wherever we draw. 
+            // So we draw opaque black (color doesn't matter, just needs alpha 1).
+            ftx.fillStyle = 'rgba(0,0,0,1)';
+            ftx.strokeStyle = 'rgba(0,0,0,1)';
 
-    if (t.cornerDot && t.cornerDot !== 'transparent') {
-      ctx.fillStyle = t.cornerDot;
-      const dotSize = Math.max(0.5, cellSize * 0.06);
-      for (let y = 0; y <= rows; y++) {
-        for (let x = 0; x <= cols; x++) {
-          // Skip corners that touch the exact extreme limits to prevent clipping issues
-          if ((x === 0 || x === cols) && (y === 0 || y === rows)) continue;
-          ctx.fillRect(x * cellSize - dotSize / 2, y * cellSize - dotSize / 2, dotSize, dotSize);
-        }
-      }
-    }
+            if (visitedPath.length > 0) {
+              ftx.beginPath();
+              ftx.lineWidth = cellSize * 4.5;
+              ftx.lineCap = 'round';
+              ftx.lineJoin = 'round';
+              ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
+              for (let i = 1; i < visitedPath.length; i++) {
+                ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
+              }
+              ftx.stroke();
+            }
 
-    // Fog of War Overlay for Challenge Mode
-    if (gameMode === 'Challenge' && fogCountdown === 0) {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
-      if (theme === 'Princess') ctx.fillStyle = 'rgba(255, 240, 245, 0.98)';
+            const fpx = playerPos.x * cellSize + cellSize / 2;
+            const fpy = playerPos.y * cellSize + cellSize / 2;
+            ftx.beginPath();
+            ftx.arc(fpx, fpy, cellSize * 3.5, 0, Math.PI * 2);
+            ftx.fill();
 
-      ctx.beginPath();
-      // Outer massive rect covering the whole canvas
-      ctx.rect(0, 0, pixelWidth, pixelHeight);
-
-      // 1. Carve path hole
-      if (visitedPath.length > 0) {
-        ctx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
-        for (let i = 1; i < visitedPath.length; i++) {
-          ctx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
-        }
-      }
-
-      // 2. Carve radius around player
-      const px = playerPos.x * cellSize + cellSize / 2;
-      const py = playerPos.y * cellSize + cellSize / 2;
-      
-      ctx.moveTo(px + cellSize * 3, py);
-      ctx.arc(px, py, cellSize * 3, 0, Math.PI * 2, true); // true = counter-clockwise
-
-      // 3. Start and end markers (small holes)
-      ctx.moveTo(cellSize / 2 + cellSize * 1.5, cellSize / 2);
-      ctx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2, true);
-
-      const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-      const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-      ctx.moveTo(endCx + cellSize * 1.5, endCy);
-      ctx.arc(endCx, endCy, cellSize * 1.5, 0, Math.PI * 2, true);
-
-      const fogCanvas = document.createElement('canvas');
-      fogCanvas.width = pixelWidth;
-      fogCanvas.height = pixelHeight;
-      const ftx = fogCanvas.getContext('2d');
-      if (ftx) {
-        ftx.fillStyle = ctx.fillStyle;
-        ftx.fillRect(0, 0, pixelWidth, pixelHeight);
-
-        ftx.globalCompositeOperation = 'destination-out';
-        ftx.filter = `blur(${cellSize * 1.2}px)`;
-
-        if (visitedPath.length > 0) {
-          ftx.beginPath();
-          ftx.strokeStyle = 'rgba(0, 0, 0, 1)';
-          // Wide corridor for permanent vision
-          ftx.lineWidth = cellSize * 4.5;
-          ftx.lineCap = 'round';
-          ftx.lineJoin = 'round';
-          ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
-          for (let i = 1; i < visitedPath.length; i++) {
-            ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
-          }
-          ftx.stroke();
+            // Permanent small holes at start/end
+            // We use standard fill style alpha since destination-out considers the alpha channel.
+            ftx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ftx.beginPath(); ftx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
+            const fendCx = (mazeWidth - 1) * cellSize + cellSize / 2;
+            const fendCy = (mazeHeight - 1) * cellSize + cellSize / 2;
+            ftx.beginPath(); ftx.arc(fendCx, fendCy, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
+            
+            // Reset composite state for next frame
+            ftx.globalCompositeOperation = 'source-over';
+            ftx.filter = 'none';
         }
 
-        // Extra wide bulb to make the player's CURRENT vision slightly larger
-        const fpx = playerPos.x * cellSize + cellSize / 2;
-        const fpy = playerPos.y * cellSize + cellSize / 2;
-        ftx.fillStyle = 'rgba(0, 0, 0, 1)';
-        ftx.beginPath();
-        ftx.arc(fpx, fpy, cellSize * 3.5, 0, Math.PI * 2);
-        ftx.fill();
-
-        // Start and end markers (faint/small permanent holes so players always know general direction)
-        ftx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ftx.beginPath(); ftx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-        const fendCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-        const fendCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-        ftx.beginPath(); ftx.arc(fendCx, fendCy, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-
-        // Reset filter
-        ftx.filter = 'none';
-      }
-
-      // Draw the fog mask over the main canvas
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(fogCanvas, 0, 0);
+        // Draw the fully prepared fog mask over the main canvas
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(fogCanvas, 0, 0);
+        ctx.restore();
     }
-  }, [maze, cellSize, mazeWidth, mazeHeight, theme, visitedPath, optimalPath, replayIndex, t, dpr, pixelWidth, pixelHeight, isKidsMode, gameMode, fogCountdown, playerPos]);
+
+  }, [maze.length, pixelWidth, pixelHeight, visitedPath, optimalPath, replayIndex, t.trailColor, t.playerColor, t.ambience, t.endColor, theme, dpr, cellSize, mazeWidth, mazeHeight, isKidsMode, gameMode, fogCountdown, playerPos]);
 
   return (
     <canvas
