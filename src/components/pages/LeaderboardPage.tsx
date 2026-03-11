@@ -134,10 +134,10 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
             <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto flex flex-col gap-10 h-full">
               
               {/* Podium for Top 3 */}
-              <div className="flex items-end justify-center gap-3 md:gap-6 min-h-[240px] pt-12 pb-4">
+              <div className="flex items-end justify-center gap-3 md:gap-6 min-h-[260px] pt-20 pb-4">
                 {podiumOrder.map((entry, idx) => {
                   const isFirst = entry.rank === 1;
-                  const heightClass = isFirst ? 'h-44 md:h-52' : entry.rank === 2 ? 'h-36 md:h-44' : 'h-32 md:h-36';
+                  const heightClass = isFirst ? 'h-48 md:h-56' : entry.rank === 2 ? 'h-40 md:h-48' : 'h-36 md:h-40';
                   const rankColor = getRankColor(entry.rank);
 
                   return (
@@ -158,9 +158,12 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
                         <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
                         <div className={`flex flex-col items-center z-10 ${appIsDark ? 'text-white drop-shadow-md' : 'text-slate-900 drop-shadow-sm'}`}>
                           <span className="font-mono font-black text-3xl md:text-4xl tracking-tighter">{formatTime(entry.time)}</span>
-                          <div className="flex items-center gap-1.5 opacity-90 mt-1">
-                            <Footprints size={12} />
-                            <span className="font-bold text-xs tracking-wider">{entry.moves}</span>
+                          <div className="flex flex-col items-center opacity-90 mt-1 gap-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <Footprints size={12} />
+                              <span className="font-bold text-xs tracking-wider">{entry.moves}</span>
+                            </div>
+                            <span className="text-[10px] font-mono opacity-70 tracking-widest">{new Date(entry.date).toLocaleDateString()}</span>
                           </div>
                         </div>
                         {/* Glass reflection highlight */}
