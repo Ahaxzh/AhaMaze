@@ -134,16 +134,16 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
             <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-4xl mx-auto flex flex-col gap-10 h-full">
               
               {/* Podium for Top 3 */}
-              <div className="flex items-end justify-center gap-3 md:gap-6 min-h-[260px] pt-20 pb-4">
+              <div className="flex items-end justify-center gap-3 md:gap-6 min-h-[260px] pt-8 pb-4">
                 {podiumOrder.map((entry, idx) => {
                   const isFirst = entry.rank === 1;
                   const heightClass = isFirst ? 'h-48 md:h-56' : entry.rank === 2 ? 'h-40 md:h-48' : 'h-36 md:h-40';
                   const rankColor = getRankColor(entry.rank);
 
                   return (
-                    <motion.div key={`${entry.name}-${entry.rank}`} variants={itemVariants} className={`relative flex flex-col items-center flex-1 max-w-[160px] md:max-w-[200px]`}>
+                    <motion.div key={`${entry.name}-${entry.rank}`} variants={itemVariants} className={`flex flex-col items-center justify-end flex-1 max-w-[160px] md:max-w-[200px]`}>
                       {/* Avatar / Crown */}
-                      <div className={`absolute -top-14 z-20 flex flex-col items-center ${isFirst ? '-top-16 scale-110' : ''}`}>
+                      <div className={`z-20 flex flex-col items-center -mb-3 origin-bottom ${isFirst ? 'scale-110 -mb-4' : ''}`}>
                         {isFirst && <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2.5 }}><Trophy size={36} className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.6)] mb-2" fill="currentColor"/></motion.div>}
                         {entry.rank === 2 && <Medal size={30} className="text-slate-300 drop-shadow-md mb-2" fill="currentColor" />}
                         {entry.rank === 3 && <Medal size={30} className="text-orange-400 drop-shadow-md mb-2" fill="currentColor" />}
