@@ -10,621 +10,28 @@ import {
   ChevronRight as ChevronRightIcon,
 } from 'lucide-react';
 
-// --- Constants & Types ---
-type Difficulty = 'Kids' | 'Easy' | 'Medium' | 'Hard';
-type Theme = 'Princess' | 'Starry' | 'Neon' | 'Retro' | 'Light' | 'Sunset' | 'Ocean' | 'Rose' | 'Amber' | 'Midnight';
-type Language = 'en' | 'zh';
+import {
+  Difficulty, Theme, Language, GameMode, ActivePage, LeaderboardEntry, Position
+} from '../types/game';
+import {
+  MAZE_SIZES, MAZE_DIFFICULTY_PARAMS, THEME_CONFIGS, TEXTS, KIDS_EMOJIS
+} from '../constants/game';
+import { KidsBackground } from './backgrounds/KidsBackground';
+import { TopNavbar } from './layout/TopNavbar';
+import { LeaderboardPage } from './pages/LeaderboardPage';
+import { InfoPanel } from './sidebar/InfoPanel';
+import { ControlPanel } from './sidebar/ControlPanel';
+import { ResultPanel } from './sidebar/ResultPanel';
+import { LoginModal } from './modals/LoginModal';
 
-const DIFFICULTY_SETTINGS: Record<Difficulty, { width: number; height: number }> = {
-  Kids: { width: 10, height: 10 },
-  Easy: { width: 25, height: 25 },
-  Medium: { width: 35, height: 35 },
-  Hard: { width: 45, height: 45 },
-};
 
-interface ThemeColors {
-  bg: string;
-  bgRaw: string;
-  text: string;
-  wallColor: string;
-  cellBgColor: string;
-  playerColor: string;
-  trailColor: string;
-  endColor: string;
-  accent: string;
-  gradient: string;
-  startGlow: string;
-  cornerDot: string;
-  containerBg: string;
-  containerBorder: string;
-  swatch: string;
-  textureSvg: string;
-  ambience: 'dark' | 'light';
-}
 
-const THEMES: Record<Theme, ThemeColors> = {
-  Princess: {
-    bg: 'bg-[#fff0f5]', bgRaw: '#fff0f5', text: 'text-pink-600',
-    wallColor: '#fb7185', cellBgColor: 'rgba(255, 255, 255, 0.7)',
-    playerColor: '#ff27a0', trailColor: '#fb7185', endColor: '#f43f5e',
-    accent: 'text-rose-500', gradient: 'from-pink-400 via-rose-400 to-fuchsia-400',
-    startGlow: 'rgba(251, 113, 133, 0.2)', cornerDot: 'transparent',
-    containerBg: 'bg-white/60', containerBorder: 'border-pink-200/60',
-    swatch: '#fb7185',
-    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><g fill="rgba(251,113,133,0.12)"><circle cx="30" cy="30" r="2.5"/><circle cx="0" cy="0" r="1.5"/><circle cx="60" cy="60" r="1.5"/><circle cx="0" cy="60" r="1.5"/><circle cx="60" cy="0" r="1.5"/></g></svg>`,
-    ambience: 'light',
-  },
-  Starry: {
-    bg: 'bg-[#0f0c29]', bgRaw: '#0f0c29', text: 'text-indigo-200',
-    wallColor: '#8b5cf6', cellBgColor: 'rgba(15, 23, 42, 0.5)',
-    playerColor: '#fcd34d', trailColor: '#c084fc', endColor: '#fde047',
-    accent: 'text-purple-400', gradient: 'from-indigo-900 via-purple-900 to-slate-900',
-    startGlow: 'rgba(252, 211, 77, 0.2)', cornerDot: 'transparent',
-    containerBg: 'bg-[#1e1b4b]/60', containerBorder: 'border-indigo-500/30',
-    swatch: '#8b5cf6',
-    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><g fill="rgba(192,132,252,0.1)"><circle cx="15" cy="15" r="1"/><circle cx="45" cy="45" r="1.5"/><path d="M30 5 L31 10 L36 11 L31 12 L30 17 L29 12 L24 11 L29 10 Z" transform="translate(-15, 20) scale(0.5)"/></g></svg>`,
-    ambience: 'dark',
-  },
-  Neon: {
-    bg: 'bg-slate-950', bgRaw: '#020617', text: 'text-slate-100',
-    wallColor: '#334155', cellBgColor: 'rgba(15, 23, 42, 0.4)',
-    playerColor: '#06b6d4', trailColor: '#06b6d4', endColor: '#ec4899',
-    accent: 'text-cyan-400', gradient: 'from-cyan-400 via-blue-500 to-purple-600',
-    startGlow: 'rgba(6, 182, 212, 0.25)', cornerDot: 'rgba(100, 116, 139, 0.6)',
-    containerBg: 'bg-slate-900/60', containerBorder: 'border-white/10',
-    swatch: '#06b6d4',
-    textureSvg: `<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0v60" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="60" height="60" fill="url(#g)"/></svg>`,
-    ambience: 'dark',
-  },
-  Retro: {
-    bg: 'bg-[#0f172a]', bgRaw: '#0f172a', text: 'text-emerald-400',
-    wallColor: '#059669', cellBgColor: 'rgba(6, 78, 59, 0.15)',
-    playerColor: '#10b981', trailColor: '#10b981', endColor: '#fbbf24',
-    accent: 'text-emerald-400', gradient: 'from-emerald-400 to-teal-500',
-    startGlow: 'rgba(16, 185, 129, 0.25)', cornerDot: 'rgba(52, 211, 153, 0.4)',
-    containerBg: 'bg-[#064e3b]/30', containerBorder: 'border-emerald-900/50',
-    swatch: '#10b981',
-    textureSvg: `<svg width="4" height="4" xmlns="http://www.w3.org/2000/svg"><rect width="4" height="2" fill="rgba(0,0,0,0.2)"/></svg>`,
-    ambience: 'dark',
-  },
-  Light: {
-    bg: 'bg-slate-50', bgRaw: '#f8fafc', text: 'text-slate-800',
-    wallColor: '#cbd5e1', cellBgColor: '#ffffff',
-    playerColor: '#3b82f6', trailColor: '#3b82f6', endColor: '#ef4444',
-    accent: 'text-blue-600', gradient: 'from-blue-500 to-violet-500',
-    startGlow: 'rgba(59, 130, 246, 0.15)', cornerDot: 'transparent',
-    containerBg: 'bg-white/70', containerBorder: 'border-white/60',
-    swatch: '#3b82f6',
-    textureSvg: `<svg width="20" height="20" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="1" fill="rgba(148,163,184,0.15)"/></svg>`,
-    ambience: 'light',
-  },
-  Sunset: {
-    bg: 'bg-[#1a0b0e]', bgRaw: '#1a0b0e', text: 'text-orange-50',
-    wallColor: '#9a3412', cellBgColor: 'rgba(67, 20, 7, 0.5)',
-    playerColor: '#f97316', trailColor: '#ea580c', endColor: '#e11d48',
-    accent: 'text-orange-400', gradient: 'from-orange-400 via-rose-500 to-purple-600',
-    startGlow: 'rgba(249, 115, 22, 0.2)', cornerDot: 'rgba(251, 146, 60, 0.4)',
-    containerBg: 'bg-[#2a1215]/60', containerBorder: 'border-rose-900/30',
-    swatch: '#f97316',
-    textureSvg: `<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M0 40L40 0M-10 10L10 -10M30 50L50 30" stroke="rgba(251,146,60,0.05)" stroke-width="1.5"/></svg>`,
-    ambience: 'dark',
-  },
-  Ocean: {
-    bg: 'bg-[#041e3a]', bgRaw: '#041e3a', text: 'text-sky-50',
-    wallColor: '#0284c7', cellBgColor: 'rgba(8, 47, 73, 0.5)',
-    playerColor: '#0ea5e9', trailColor: '#0284c7', endColor: '#8b5cf6',
-    accent: 'text-sky-400', gradient: 'from-sky-300 via-blue-500 to-indigo-500',
-    startGlow: 'rgba(14, 165, 233, 0.2)', cornerDot: 'rgba(56, 189, 248, 0.4)',
-    containerBg: 'bg-[#082f49]/60', containerBorder: 'border-sky-800/30',
-    swatch: '#0ea5e9',
-    textureSvg: `<svg width="100" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q25 0 50 10 T100 10" fill="none" stroke="rgba(56,189,248,0.05)" stroke-width="1.5"/></svg>`,
-    ambience: 'dark',
-  },
-  Rose: {
-    bg: 'bg-[#1e0a13]', bgRaw: '#1e0a13', text: 'text-pink-50',
-    wallColor: '#be185d', cellBgColor: 'rgba(80, 7, 36, 0.4)',
-    playerColor: '#ec4899', trailColor: '#db2777', endColor: '#a855f7',
-    accent: 'text-pink-400', gradient: 'from-pink-400 via-purple-500 to-indigo-500',
-    startGlow: 'rgba(236, 72, 153, 0.2)', cornerDot: 'rgba(244, 114, 182, 0.4)',
-    containerBg: 'bg-[#2e101d]/60', containerBorder: 'border-pink-900/30',
-    swatch: '#ec4899',
-    textureSvg: `<svg width="30" height="30" xmlns="http://www.w3.org/2000/svg"><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(244,114,182,0.05)" stroke-width="1"/></svg>`,
-    ambience: 'dark',
-  },
-  Amber: {
-    bg: 'bg-[#fffbeb]', bgRaw: '#fffbeb', text: 'text-amber-900',
-    wallColor: '#d97706', cellBgColor: '#ffffff',
-    playerColor: '#f59e0b', trailColor: '#d97706', endColor: '#ef4444',
-    accent: 'text-amber-600', gradient: 'from-amber-400 via-orange-500 to-red-500',
-    startGlow: 'rgba(245, 158, 11, 0.15)', cornerDot: 'transparent',
-    containerBg: 'bg-white/70', containerBorder: 'border-white/60',
-    swatch: '#f59e0b',
-    textureSvg: `<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg"><path d="M0 24L24 0M-6 6L6 -6M18 30L30 18" stroke="rgba(217,119,6,0.05)" stroke-width="1"/></svg>`,
-    ambience: 'light',
-  },
-  Midnight: {
-    bg: 'bg-[#020617]', bgRaw: '#020617', text: 'text-indigo-50',
-    wallColor: '#4338ca', cellBgColor: 'rgba(17, 24, 39, 0.6)',
-    playerColor: '#6366f1', trailColor: '#4f46e5', endColor: '#10b981',
-    accent: 'text-indigo-400', gradient: 'from-indigo-400 via-purple-400 to-emerald-400',
-    startGlow: 'rgba(99, 102, 241, 0.2)', cornerDot: 'rgba(129, 140, 248, 0.4)',
-    containerBg: 'bg-[#0f172a]/60', containerBorder: 'border-indigo-900/30',
-    swatch: '#6366f1',
-    textureSvg: `<svg width="50" height="50" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="24" width="2" height="2" rx="1" fill="rgba(129,140,248,0.1)"/></svg>`,
-    ambience: 'dark',
-  },
-};
 
-const TEXTS: Record<Language, Record<string, string>> = {
-  en: {
-    title: 'AhaMaze', home: 'Home', challenge: 'Challenge', leaderboard: 'Leaderboard',
-    moves: 'MOVES', level: 'LVL', timer: 'TIME', difficulty: 'DIFFICULTY',
-    cleared: 'CLEARED', gaveUp: 'GAVE UP', optimal: 'OPTIMAL', efficiency: 'EFFICIENCY',
-    solutionSteps: 'SOLUTION',
-    nextLevel: 'NEXT LEVEL', replay: 'REPLAY', giveUp: 'HELP',
-    download: 'DOWNLOAD', pathReplay: 'REPLAY PATH', stopReplay: 'STOP',
-    kids: 'KIDS', easy: 'EASY', medium: 'MEDIUM', hard: 'HARD',
-    sound: 'Sound', newMaze: 'NEW MAZE',
-    stats: 'STATS & MAP', controls: 'CONTROLS',
-  },
-  zh: {
-    title: 'AhaMaze', home: '首页', challenge: '挑战', leaderboard: '排行榜',
-    moves: '步数', level: '关卡', timer: '用时', difficulty: '难度',
-    cleared: '通关成功', gaveUp: '已放弃', optimal: '最优步数', efficiency: '效率',
-    solutionSteps: '正解步数',
-    nextLevel: '下一关', replay: '重玩', giveUp: '提示',
-    download: '下载', pathReplay: '路径回放', stopReplay: '停止',
-    kids: '儿童', easy: '简单', medium: '中等', hard: '困难',
-    sound: '音效', newMaze: '新迷宫',
-    stats: '信息与地图', controls: '游戏操作',
-    classicMode: '经典模式', challengeMode: '挑战模式',
-    fogWarning: '迷雾降临倒计时',
-  },
-};
+import { MazeCanvas, Player, EndMarkerPulse, downloadMazeImage } from './game/MazeCanvas';
 
-type GameMode = 'Classic' | 'Challenge';
-type ActivePage = 'Classic' | 'Challenge' | 'Leaderboard';
-type Position = { x: number; y: number };
 
-// --- Canvas Maze Renderer ---
-interface MazeCanvasProps {
-  maze: Cell[][]; cellSize: number; mazeWidth: number; mazeHeight: number;
-  theme: Theme; visitedPath: Position[]; optimalPath: Position[]; replayIndex: number;
-  difficulty: Difficulty; gameMode: GameMode; fogCountdown: number; playerPos: Position;
-}
 
-const MazeCanvas = React.memo(function MazeCanvas({
-  maze, cellSize, mazeWidth, mazeHeight, theme, visitedPath, optimalPath, replayIndex, difficulty, gameMode, fogCountdown, playerPos
-}: MazeCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pixelWidth = Math.round(mazeWidth * cellSize);
-  const pixelHeight = Math.round(mazeHeight * cellSize);
-  const t = THEMES[theme];
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const isKidsMode = difficulty === 'Kids';
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || maze.length === 0) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Offset by 0.5px to properly render sharp 1px lines without anti-aliasing edge blur
-    ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
-    ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
-
-    ctx.fillStyle = t.cellBgColor;
-    ctx.fillRect(0, 0, pixelWidth, pixelHeight);
-
-    // Dynamic sizing based on cellSize
-    const glowOffset = cellSize * 0.1;
-    const glowSize = cellSize * 0.8;
-    ctx.fillStyle = t.startGlow;
-    ctx.fillRect(glowOffset, glowOffset, glowSize, glowSize);
-
-    // Kids mode: Animated Heart as end goal
-    if (isKidsMode) {
-      ctx.save();
-      const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-      const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-      ctx.translate(endCx - cellSize * 0.25, endCy - cellSize * 0.25);
-      // scale up the svg heart slightly
-      ctx.scale(cellSize * 0.05, cellSize * 0.05);
-      ctx.fillStyle = t.endColor;
-      ctx.beginPath();
-      // standard heart path
-      ctx.moveTo(5, 3);
-      ctx.bezierCurveTo(5, 3, 4.5, 0, 2.5, 0); ctx.bezierCurveTo(0, 0, 0, 3, 0, 3);
-      ctx.bezierCurveTo(0, 6, 5, 9, 5, 9);
-      ctx.bezierCurveTo(5, 9, 10, 6, 10, 3); ctx.bezierCurveTo(10, 3, 10, 0, 7.5, 0);
-      ctx.bezierCurveTo(6, 0, 5, 3, 5, 3);
-      ctx.fill();
-      ctx.restore();
-    } else {
-      ctx.fillStyle = t.endColor;
-      const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-      const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-      ctx.beginPath();
-      ctx.arc(endCx, endCy, cellSize * 0.25, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    const pathToDraw = replayIndex >= 0 ? visitedPath.slice(0, replayIndex + 1) : visitedPath;
-    if (pathToDraw.length > 1) {
-      if (isKidsMode) {
-        // Kids mode rainbow trail
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.lineWidth = Math.max(2, cellSize * 0.35);
-        for (let i = 1; i < pathToDraw.length; i++) {
-          ctx.beginPath();
-          const hue = (i * 12) % 360;
-          ctx.strokeStyle = `hsla(${hue}, 80%, 65%, 0.6)`;
-          const p1 = pathToDraw[i - 1]; const p2 = pathToDraw[i];
-          ctx.moveTo(p1.x * cellSize + cellSize / 2, p1.y * cellSize + cellSize / 2);
-          ctx.lineTo(p2.x * cellSize + cellSize / 2, p2.y * cellSize + cellSize / 2);
-          ctx.stroke();
-        }
-      } else {
-        ctx.beginPath();
-        ctx.strokeStyle = t.trailColor;
-        ctx.globalAlpha = 0.3;
-        ctx.lineWidth = Math.max(1.5, cellSize * 0.3);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        const s = pathToDraw[0];
-        ctx.moveTo(s.x * cellSize + cellSize / 2, s.y * cellSize + cellSize / 2);
-        for (let i = 1; i < pathToDraw.length; i++) {
-          const p = pathToDraw[i];
-          ctx.lineTo(p.x * cellSize + cellSize / 2, p.y * cellSize + cellSize / 2);
-        }
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    if (replayIndex >= 0 && replayIndex < visitedPath.length) {
-      const head = visitedPath[replayIndex];
-      const px = head.x * cellSize + cellSize / 2;
-      const py = head.y * cellSize + cellSize / 2;
-      if (isKidsMode) {
-        ctx.font = `${Math.floor(cellSize * 0.7)}px Arial`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('💖', px, py + cellSize * 0.05);
-      } else {
-        ctx.fillStyle = t.playerColor;
-        ctx.globalAlpha = 0.6;
-        ctx.beginPath();
-        ctx.arc(px, py, cellSize * 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    if (optimalPath.length > 0 && replayIndex < 0) {
-      ctx.fillStyle = 'rgba(250, 204, 21, 0.8)';
-      const optRadius = Math.max(1, cellSize * 0.1);
-      for (const p of optimalPath) {
-        if (p.x === 0 && p.y === 0) continue;
-        if (p.x === mazeWidth - 1 && p.y === mazeHeight - 1) continue;
-        ctx.beginPath();
-        ctx.arc(p.x * cellSize + cellSize / 2, p.y * cellSize + cellSize / 2, optRadius, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    ctx.strokeStyle = t.wallColor;
-    const baseLineWidth = Math.max(1, cellSize * 0.08);
-    ctx.lineWidth = baseLineWidth;
-    // Use 'square' to extend the lines slightly to cover corners cleanly
-    ctx.lineCap = 'square';
-    ctx.lineJoin = 'miter';
-    ctx.beginPath();
-    const rows = maze.length;
-    const cols = maze[0]?.length ?? 0;
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const cell = maze[y][x];
-        const px = x * cellSize;
-        const py = y * cellSize;
-        if (cell.walls.top) { ctx.moveTo(px, py); ctx.lineTo(px + cellSize, py); }
-        if (cell.walls.right) { ctx.moveTo(px + cellSize, py); ctx.lineTo(px + cellSize, py + cellSize); }
-        if (cell.walls.bottom) { ctx.moveTo(px, py + cellSize); ctx.lineTo(px + cellSize, py + cellSize); }
-        if (cell.walls.left) { ctx.moveTo(px, py); ctx.lineTo(px, py + cellSize); }
-      }
-    }
-    ctx.stroke();
-
-    // Draw an explicit outer border to ensure outer walls don't appear thinner due to stroke clipping
-    ctx.lineWidth = baseLineWidth;
-    // Adjust by half the line width so the stroke bounds precisely to the edge of the pixelWidth/Height
-    const offset = baseLineWidth / 2;
-    ctx.strokeRect(offset, offset, pixelWidth - baseLineWidth, pixelHeight - baseLineWidth);
-
-    if (t.cornerDot !== 'transparent') {
-      ctx.fillStyle = t.cornerDot;
-      const dotSize = Math.max(0.5, cellSize * 0.06);
-      for (let y = 0; y <= rows; y++) {
-        for (let x = 0; x <= cols; x++) {
-          // Skip corners that touch the exact extreme limits to prevent clipping issues
-          if ((x === 0 || x === cols) && (y === 0 || y === rows)) continue;
-          ctx.fillRect(x * cellSize - dotSize / 2, y * cellSize - dotSize / 2, dotSize, dotSize);
-        }
-      }
-    }
-
-    // Fog of War Overlay for Challenge Mode
-    if (gameMode === 'Challenge' && fogCountdown === 0) {
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
-      if (theme === 'Princess') ctx.fillStyle = 'rgba(255, 240, 245, 0.98)';
-
-      ctx.beginPath();
-      // Outer massive rect covering the whole canvas
-      ctx.rect(0, 0, pixelWidth, pixelHeight);
-
-      // 1. Carve path hole
-      if (visitedPath.length > 0) {
-        ctx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
-        for (let i = 1; i < visitedPath.length; i++) {
-          ctx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
-        }
-      }
-
-      // 2. Carve radius around player
-      const px = playerPos.x * cellSize + cellSize / 2;
-      const py = playerPos.y * cellSize + cellSize / 2;
-      // Note: arc drawing direction doesn't matter for evenodd if it doesn't intersect itself in a weird way,
-      // but to be safe with standard path overlapping, let's just add it as a sub-path.
-      ctx.moveTo(px + cellSize * 3, py);
-      ctx.arc(px, py, cellSize * 3, 0, Math.PI * 2, true); // true = counter-clockwise
-
-      // 3. Start and end markers (small holes)
-      ctx.moveTo(cellSize / 2 + cellSize * 1.5, cellSize / 2);
-      ctx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2, true);
-
-      const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-      const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-      ctx.moveTo(endCx + cellSize * 1.5, endCy);
-      ctx.arc(endCx, endCy, cellSize * 1.5, 0, Math.PI * 2, true);
-
-      // We need thick strokes for the path, but 'evenodd' fill only works on areas.
-      // So instead of a single fill with a line, we can't carve a "line" hole with evenodd easily without stroking first.
-      //
-      // Best solution: Use a second offscreen canvas for the fog to use destination-out masking.
-      // Or just draw everything in offscreen and drawImage.
-
-      // Let's use the offscreen canvas approach for perfect destination-out masking:
-      const fogCanvas = document.createElement('canvas');
-      fogCanvas.width = pixelWidth;
-      fogCanvas.height = pixelHeight;
-      const ftx = fogCanvas.getContext('2d');
-      if (ftx) {
-        ftx.fillStyle = ctx.fillStyle;
-        ftx.fillRect(0, 0, pixelWidth, pixelHeight);
-
-        ftx.globalCompositeOperation = 'destination-out';
-        ftx.filter = `blur(${cellSize * 1.2}px)`;
-
-        if (visitedPath.length > 0) {
-          ftx.beginPath();
-          ftx.strokeStyle = 'rgba(0, 0, 0, 1)';
-          // Wide corridor for permanent vision
-          ftx.lineWidth = cellSize * 4.5;
-          ftx.lineCap = 'round';
-          ftx.lineJoin = 'round';
-          ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
-          for (let i = 1; i < visitedPath.length; i++) {
-            ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
-          }
-          ftx.stroke();
-        }
-
-        // Extra wide bulb to make the player's CURRENT vision slightly larger
-        const px = playerPos.x * cellSize + cellSize / 2;
-        const py = playerPos.y * cellSize + cellSize / 2;
-        ftx.fillStyle = 'rgba(0, 0, 0, 1)';
-        ftx.beginPath();
-        ftx.arc(px, py, cellSize * 3.5, 0, Math.PI * 2);
-        ftx.fill();
-
-        // Start and end markers (faint/small permanent holes so players always know general direction)
-        ftx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ftx.beginPath(); ftx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-        const endCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-        const endCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-        ftx.beginPath(); ftx.arc(endCx, endCy, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-
-        // Reset filter
-        ftx.filter = 'none';
-      }
-
-      // Draw the fog mask over the main canvas
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(fogCanvas, 0, 0);
-    }
-  }, [maze, cellSize, mazeWidth, mazeHeight, theme, visitedPath, optimalPath, replayIndex, t, dpr, pixelWidth, pixelHeight, isKidsMode, gameMode, fogCountdown, playerPos]);
-
-  return (
-    <canvas
-      className="block"
-      ref={canvasRef}
-      width={pixelWidth * dpr}
-      height={pixelHeight * dpr}
-      style={{ width: pixelWidth, height: pixelHeight }}
-    />
-  );
-});
-
-// --- Player ---
-const Player = React.memo(function Player({ position, size, theme, isKidsMode }: { position: Position; size: number; theme: Theme; isKidsMode: boolean }) {
-  const t = THEMES[theme];
-  return (
-    <motion.div
-      className="absolute z-20 flex items-center justify-center pointer-events-none"
-      initial={false}
-      animate={{ x: position.x * size, y: position.y * size }}
-      transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-      style={{ width: size, height: size, top: 0, left: 0 }}
-    >
-      {isKidsMode ? (
-        <motion.div
-          animate={{ y: [0, -3, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8 }}
-          style={{ fontSize: size * 0.7, lineHeight: 1 }}
-          className="drop-shadow-sm"
-        >💖</motion.div>
-      ) : (
-        <div className="rounded-full shadow-lg relative" style={{ width: size * 0.5, height: size * 0.5, backgroundColor: t.playerColor }}>
-          <div className="absolute inset-0 rounded-full bg-white opacity-60 blur-[1px]" />
-        </div>
-      )}
-    </motion.div>
-  );
-});
-
-// --- End marker pulse ---
-const EndMarkerPulse = React.memo(function EndMarkerPulse({ mazeWidth, mazeHeight, cellSize, theme, isKidsMode }: { mazeWidth: number; mazeHeight: number; cellSize: number; theme: Theme; isKidsMode: boolean }) {
-  const t = THEMES[theme];
-  return (
-    <div className="absolute z-10 flex items-center justify-center pointer-events-none" style={{ left: (mazeWidth - 1) * cellSize, top: (mazeHeight - 1) * cellSize, width: cellSize, height: cellSize }}>
-      {isKidsMode ? (
-        <motion.div animate={{ scale: [1, 1.25, 1], rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.2 }} className="drop-shadow-md text-rose-500" style={{ fontSize: cellSize * 0.6 }}>
-          💖
-        </motion.div>
-      ) : (
-        <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="rounded-full shadow-lg" style={{ width: cellSize * 0.5, height: cellSize * 0.5, backgroundColor: t.endColor }} />
-      )}
-    </div>
-  );
-});
-
-// --- Timer Display ---
-function TimerDisplay({ startTime, gameState, className }: { startTime: number | null; gameState: string; className?: string }) {
-  const [elapsed, setElapsed] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const elapsedRef = useRef(0);
-
-  useEffect(() => {
-    if (gameState === 'playing' && startTime) {
-      timerRef.current = setInterval(() => {
-        const now = Date.now() - startTime;
-        const prevSec = Math.floor(elapsedRef.current / 1000);
-        const newSec = Math.floor(now / 1000);
-        elapsedRef.current = now;
-        if (newSec !== prevSec) setElapsed(now);
-      }, 250);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (!startTime) { setElapsed(0); elapsedRef.current = 0; }
-    }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [gameState, startTime]);
-
-  const seconds = Math.floor(elapsed / 1000);
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return <span className={className}>{mins}:{secs.toString().padStart(2, '0')}</span>;
-}
-
-// --- Download helper ---
-function downloadMazeImage(
-  maze: Cell[][], visitedPath: Position[], optimalPath: Position[], theme: Theme,
-  mazeWidth: number, mazeHeight: number, moves: number, finalTime: number, level: number, difficulty: Difficulty, lang: Language,
-) {
-  const exportCellSize = 16;
-  const padding = 60;
-  const statsHeight = 100;
-  const w = mazeWidth * exportCellSize;
-  const h = mazeHeight * exportCellSize;
-  const totalW = w + padding * 2;
-  const totalH = h + padding + statsHeight;
-  const t = THEMES[theme];
-
-  const canvas = document.createElement('canvas');
-  canvas.width = totalW; canvas.height = totalH;
-  const ctx = canvas.getContext('2d')!;
-
-  ctx.fillStyle = t.bgRaw; ctx.fillRect(0, 0, totalW, totalH);
-  ctx.save(); ctx.translate(padding, padding - 20);
-  ctx.fillStyle = t.playerColor; ctx.font = 'bold 18px Inter, sans-serif';
-  ctx.fillText('AhaMaze', 0, -10);
-  ctx.fillStyle = t.ambience === 'light' ? '#475569' : '#94a3b8';
-  ctx.font = '12px "JetBrains Mono", monospace';
-  const diffLabel = lang === 'zh' ? { Kids: '儿童', Easy: '简单', Medium: '中等', Hard: '困难' }[difficulty] : difficulty;
-  ctx.fillText(`Level ${level} | ${diffLabel} ${mazeWidth}x${mazeHeight}`, 100, -10);
-  ctx.translate(0, 20);
-
-  ctx.fillStyle = t.cellBgColor; ctx.fillRect(0, 0, w, h);
-
-  if (visitedPath.length > 1) {
-    if (difficulty === 'Kids') {
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.lineWidth = Math.max(2, exportCellSize * 0.35);
-      for (let i = 1; i < visitedPath.length; i++) {
-        ctx.beginPath();
-        ctx.strokeStyle = `hsla(${(i * 12) % 360}, 80%, 65%, 0.8)`;
-        ctx.moveTo(visitedPath[i - 1].x * exportCellSize + exportCellSize / 2, visitedPath[i - 1].y * exportCellSize + exportCellSize / 2);
-        ctx.lineTo(visitedPath[i].x * exportCellSize + exportCellSize / 2, visitedPath[i].y * exportCellSize + exportCellSize / 2);
-        ctx.stroke();
-      }
-    } else {
-      ctx.beginPath(); ctx.strokeStyle = t.trailColor; ctx.globalAlpha = 0.3;
-      ctx.lineWidth = Math.max(2, exportCellSize / 4); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.moveTo(visitedPath[0].x * exportCellSize + exportCellSize / 2, visitedPath[0].y * exportCellSize + exportCellSize / 2);
-      for (let i = 1; i < visitedPath.length; i++) {
-        ctx.lineTo(visitedPath[i].x * exportCellSize + exportCellSize / 2, visitedPath[i].y * exportCellSize + exportCellSize / 2);
-      }
-      ctx.stroke(); ctx.globalAlpha = 1;
-    }
-  }
-  if (optimalPath.length > 0) {
-    ctx.fillStyle = 'rgba(250, 204, 21, 0.8)';
-    for (const p of optimalPath) {
-      if (p.x === 0 && p.y === 0) continue;
-      if (p.x === mazeWidth - 1 && p.y === mazeHeight - 1) continue;
-      ctx.beginPath(); ctx.arc(p.x * exportCellSize + exportCellSize / 2, p.y * exportCellSize + exportCellSize / 2, 2, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-  ctx.fillStyle = t.startGlow; ctx.fillRect(1, 1, exportCellSize - 2, exportCellSize - 2);
-  ctx.fillStyle = t.endColor; ctx.beginPath();
-  ctx.arc((mazeWidth - 1) * exportCellSize + exportCellSize / 2, (mazeHeight - 1) * exportCellSize + exportCellSize / 2, exportCellSize * 0.25, 0, Math.PI * 2); ctx.fill();
-
-  ctx.strokeStyle = t.wallColor; ctx.lineWidth = 1.5; ctx.lineCap = 'square'; ctx.lineJoin = 'miter'; ctx.beginPath();
-  for (let y = 0; y < maze.length; y++) {
-    for (let x = 0; x < (maze[0]?.length ?? 0); x++) {
-      const cell = maze[y][x]; const px = x * exportCellSize; const py = y * exportCellSize;
-      if (cell.walls.top) { ctx.moveTo(px, py); ctx.lineTo(px + exportCellSize, py); }
-      if (cell.walls.right) { ctx.moveTo(px + exportCellSize, py); ctx.lineTo(px + exportCellSize, py + exportCellSize); }
-      if (cell.walls.bottom) { ctx.moveTo(px, py + exportCellSize); ctx.lineTo(px + exportCellSize, py + exportCellSize); }
-      if (cell.walls.left) { ctx.moveTo(px, py); ctx.lineTo(px, py + exportCellSize); }
-    }
-  }
-  ctx.stroke();
-
-  // Add the explicit outer border to the exported image as well
-  ctx.lineWidth = 1.5;
-  const offset = 1.5 / 2;
-  ctx.strokeRect(offset, offset, w - 1.5, h - 1.5);
-
-  ctx.restore();
-
-  const statsY = h + padding + 20;
-  ctx.fillStyle = t.ambience === 'light' ? '#475569' : '#94a3b8'; ctx.font = '13px "JetBrains Mono", monospace';
-  const secs = Math.floor(finalTime / 1000); const mins = Math.floor(secs / 60); const secsRem = secs % 60;
-  const timeStr = `${mins}:${secsRem.toString().padStart(2, '0')}`;
-  const optLen = optimalPath.length > 0 ? optimalPath.length - 1 : 0;
-  const eff = optLen > 0 ? Math.round((optLen / moves) * 100) : 0;
-  const movesLabel = lang === 'zh' ? '步数' : 'Moves'; const optLabel = lang === 'zh' ? '最优' : 'Optimal';
-  const timeLabel = lang === 'zh' ? '用时' : 'Time'; const effLabel = lang === 'zh' ? '效率' : 'Efficiency';
-  ctx.fillText(`${movesLabel}: ${moves}  |  ${optLabel}: ${optLen}  |  ${timeLabel}: ${timeStr}  |  ${effLabel}: ${eff}%`, padding, statsY);
-  ctx.fillStyle = t.ambience === 'light' ? '#94a3b8' : '#475569'; ctx.font = '10px "JetBrains Mono", monospace';
-  ctx.fillText('Generated by AhaMaze', padding, statsY + 24);
-
-  const link = document.createElement('a');
-  link.download = `ahamaze-level${level}-${difficulty.toLowerCase()}.png`;
-  link.href = canvas.toDataURL('image/png'); link.click();
-}
 
 // --- Mobile D-pad control button ---
 const ControlButton = React.memo(function ControlButton({ icon, onClick }: { icon: React.ReactNode; onClick: () => void }) {
@@ -638,102 +45,10 @@ const ControlButton = React.memo(function ControlButton({ icon, onClick }: { ico
   );
 });
 
-const KIDS_EMOJIS = [
-  '🎈', '🧸', '🍭', '🎀', '🦄', '🌟', '🌸', '🍓', '🍬', '🦋', '🐰', '🐶', '🍦', '🧁',
-  '🍋', '🍉', '🍇', '🍒', '🌻', '🌺', '🍀', '🍄', '🐢', '🐥', '🐧', '🐳', '🍩', '🍪',
-  '🧃', '🪁', '🚗', '🚂', '🛸', '🚀', '🎨', '🧩', '🎵', '⚽', '🏀', '☀️', '☁️', '🌙',
-  '💖', '💎', '✨', '👑', '🌈', '⭐'
-];
-
-const KidsBackground = React.memo(function KidsBackground({ isDark }: { isDark: boolean }) {
-  const [elements, setElements] = useState<Array<{ id: number; emoji: string; left: number; duration: number; delay: number; size: number; rotate: number; rotateDuration: number; drift: number }>>([]);
-
-  useEffect(() => {
-    // Increase quantity significantly to make it feel dense and magical
-    const newElements = Array.from({ length: 70 }).map((_, i) => {
-      // Much larger visual sizes: 24px - 64px
-      const visualSize = 24 + Math.random() * 40; 
-      
-      // Determine if this emoji falls on the left side or right side (avoiding center maze entirely)
-      // Left channel: 0vw to 18vw
-      // Right channel: 82vw to 98vw
-      const isLeft = Math.random() > 0.5;
-      const left = isLeft ? Math.random() * 18 : 82 + Math.random() * 16;
-      
-      return {
-        id: i,
-        emoji: KIDS_EMOJIS[Math.floor(Math.random() * KIDS_EMOJIS.length)].trim(),
-        left: left,
-        // Extremely slow and graceful float (35s to 70s)
-        duration: 35 + Math.random() * 35,
-        delay: -(Math.random() * 60),
-        visualSize,
-        rotate: Math.random() * 360,
-        rotateDuration: 15 + Math.random() * 25, 
-        drift: Math.random() * 8 - 4
-      };
-    });
-    setElements(newElements);
-  }, []);
-
-  return (
-    <div className={`absolute inset-0 overflow-hidden pointer-events-none transition-colors duration-1000 ${isDark ? 'bg-gradient-to-br from-[#2e1025] via-[#4a1c40] to-[#2e1045]' : 'bg-gradient-to-br from-pink-200 via-pink-100 to-rose-200'}`}>
-      <div className="absolute inset-0 opacity-40" style={{
-        backgroundImage: `radial-gradient(${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)'} 4px, transparent 4px)`,
-        backgroundSize: '40px 40px'
-      }} />
-      {elements.map((el) => {
-        // Render large to keep crisp, then scale depending on visualSize
-        const renderSize = 80;
-        const scale = el.visualSize / renderSize;
-        // Make them slightly semi-transparent so they blend beautifully with background and don't look completely flat
-        const opacity = isDark ? (0.4 + Math.random() * 0.4) : (0.5 + Math.random() * 0.4);
-
-        return (
-          <motion.div
-            key={el.id}
-            initial={{ y: '-15vh', x: `${el.left}vw`, rotate: el.rotate, scale, opacity: 0 }}
-            animate={{
-              y: '115vh',
-              rotate: el.rotate + 360,
-              x: [`${el.left}vw`, `${el.left + el.drift}vw`, `${el.left}vw`],
-              scale,
-              opacity: [0, opacity, opacity, 0] // Fade in at top, fade out at bottom
-            }}
-            transition={{
-              y: { duration: el.duration, repeat: Infinity, delay: el.delay, ease: "linear" },
-              rotate: { duration: el.rotateDuration, repeat: Infinity, ease: "linear" },
-              x: { duration: el.duration * 0.8, repeat: Infinity, delay: el.delay, ease: "easeInOut" },
-              opacity: { duration: el.duration, repeat: Infinity, delay: el.delay, ease: "linear", times: [0, 0.1, 0.9, 1] }
-            }}
-            style={{
-              position: 'absolute',
-              fontSize: renderSize,
-              lineHeight: 1,
-              top: 0,
-              transformOrigin: 'center center'
-            }}
-            className="drop-shadow-sm"
-          >
-            {el.emoji}
-          </motion.div>
-        );
-      })}
-    </div>
-  );
-});
-
 // =====================
 // --- Main Game ---
 // =====================
-interface LeaderboardEntry {
-  name: string;
-  difficulty: Difficulty;
-  mode: GameMode;
-  time: number;
-  moves: number;
-  date: string;
-}
+
 
 export default function Game() {
   const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
@@ -779,12 +94,12 @@ export default function Game() {
   const startTimeRef = useRef(startTime); startTimeRef.current = startTime;
   const movesRef = useRef(moves); movesRef.current = moves; // Added movesRef
 
-  const { width: MAZE_WIDTH, height: MAZE_HEIGHT } = DIFFICULTY_SETTINGS[difficulty];
+  const { width: MAZE_WIDTH, height: MAZE_HEIGHT } = MAZE_SIZES[difficulty];
   const mazeWidthRef = useRef(MAZE_WIDTH); mazeWidthRef.current = MAZE_WIDTH;
   const mazeHeightRef = useRef(MAZE_HEIGHT); mazeHeightRef.current = MAZE_HEIGHT;
 
   const text = TEXTS[lang];
-  const t = THEMES[theme];
+  const t = THEME_CONFIGS[theme];
   // Determine if the current App-level requested aesthetics is dark based on the active theme
   // We use this to know which Kids mode version to show if we switch TO Kids mode.
   const appIsDark = useMemo(() => {
@@ -1131,109 +446,20 @@ export default function Game() {
         )}
       </div>
       {/* ========== TOP NAVBAR ========== */}
-      <div className="relative z-20 shrink-0 p-2 md:p-4 pb-0">
-        <nav className={`flex items-center justify-between p-2 md:p-3 px-4 md:px-6 rounded-2xl border shadow-sm backdrop-blur-xl transition-colors duration-500 ${appIsDark ? 'bg-slate-900/40 border-white/5' : 'bg-white/60 border-black/5'}`}>
-
-          {/* Left: Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br" style={{ backgroundImage: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` }}>
-              <span className="text-white font-black tracking-tighter mix-blend-overlay">AH</span>
-            </div>
-            <span className={`font-black tracking-tight text-lg hidden sm:block ${t.text}`}>
-              {text.title}
-            </span>
-          </div>
-
-          {/* Center: Main App Router Tabs */}
-          <div className={`hidden md:flex items-center p-1 rounded-xl mx-4 transition-colors duration-500 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
-            <button
-              onClick={() => setActivePage('Classic')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Classic'
-                ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <Swords size={16} className={activePage === 'Classic' ? t.text : ''} /> {text.classicMode.replace('模式', '') || 'Classic'}
-            </button>
-            <button
-              onClick={() => setActivePage('Challenge')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Challenge'
-                ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <Trophy size={16} /> {text.challenge}
-            </button>
-            <button
-              onClick={() => setActivePage('Leaderboard')}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Leaderboard'
-                ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <BarChart3 size={16} /> {text.leaderboard}
-            </button>
-          </div>
-
-          {/* Center Mobile: Simple Header Router */}
-          <div className={`md:hidden flex items-center p-1 rounded-xl mx-2 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
-             <button
-              onClick={() => setActivePage('Classic')}
-              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Classic'
-                ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <Swords size={14} className={activePage === 'Classic' ? t.text : ''} />
-            </button>
-            <button
-              onClick={() => setActivePage('Challenge')}
-              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Challenge'
-                ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <Trophy size={14} />
-            </button>
-            <button
-              onClick={() => setActivePage('Leaderboard')}
-              className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Leaderboard'
-                ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
-                : `opacity-60 hover:opacity-100 ${t.text}`
-                }`}
-            >
-              <BarChart3 size={14} />
-            </button>
-          </div>
-
-          {/* Right: Controls */}
-          <div className="flex items-center gap-2">
-            <button onClick={toggleDarkLight} className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-yellow-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
-              {appIsDark ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
-              <Globe size={18} />
-            </button>
-            {/* User profile / Login */}
-            <div
-              onClick={() => setShowLogin(true)}
-              className={`px-3 h-9 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-opacity ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
-            >
-              <User size={16} />
-              <span className="hidden md:inline-block max-w-[80px] truncate">{playerName || (lang === 'zh' ? '游客' : 'Guest')}</span>
-            </div>
-            {/* Mobile sidebar toggle */}
-            {(activePage === 'Classic' || activePage === 'Challenge') && (
-              <button
-                onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                className={`lg:hidden p-2 rounded-xl transition-all ${appIsDark ? 'bg-white/5 text-white' : 'bg-black/5 text-slate-900'}`}
-              >
-                <ChevronRightIcon size={18} className={showMobileSidebar ? 'rotate-180 transition-transform' : 'transition-transform'} />
-              </button>
-            )}
-          </div>
-        </nav>
-      </div>
+      <TopNavbar
+        appIsDark={appIsDark}
+        theme={theme}
+        text={text}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        toggleDarkLight={toggleDarkLight}
+        lang={lang}
+        setLang={setLang}
+        setShowLogin={setShowLogin}
+        playerName={playerName}
+        showMobileSidebar={showMobileSidebar}
+        setShowMobileSidebar={setShowMobileSidebar}
+      />
 
       {/* ========== MAIN CONTENT (maze + sidebar) ========== */}
       {(activePage === 'Classic' || activePage === 'Challenge') && (
@@ -1325,92 +551,40 @@ export default function Game() {
           <div className="flex-1 flex flex-col gap-4 overflow-y-auto overflow-x-hidden pr-2 pb-2">
 
             {/* --- Stats & Mini Map Panel --- */}
-            <div className={`p-4 rounded-2xl border shadow-sm backdrop-blur-md flex flex-col gap-3 ${appIsDark ? 'bg-slate-900/60 border-white/5' : 'bg-white/70 border-white'}`}>
-              <div className="text-xs uppercase tracking-widest font-bold opacity-50 px-1">{text.stats}</div>
-              <div className="flex gap-4 items-center">
-                {/* Left: Mini Map */}
-                <div className={`w-28 h-28 shrink-0 rounded-xl overflow-hidden border flex items-center justify-center p-1 relative ${appIsDark ? 'border-white/10 bg-black/40' : 'border-black/10 bg-black/5'}`}>
-                  {maze.length > 0 && (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="opacity-90">
-                      <MazeCanvas
-                        maze={maze} cellSize={112 / Math.max(MAZE_WIDTH, MAZE_HEIGHT)}
-                        mazeWidth={MAZE_WIDTH} mazeHeight={MAZE_HEIGHT} theme={theme} visitedPath={visitedPath} optimalPath={optimalPath}
-                        replayIndex={replayIndex} difficulty={difficulty} gameMode='Classic' fogCountdown={10} playerPos={{ x: 0, y: 0 }}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Right: Info */}
-                <div className="flex-1 flex flex-col justify-center gap-2">
-                  <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Clock size={12} /> {text.timer}</span>
-                    <TimerDisplay startTime={startTime} gameState={gameState} className="font-mono text-sm font-bold tracking-tight" />
-                  </div>
-                  <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Footprints size={12} /> {text.moves}</span>
-                    <span className="font-mono text-sm font-bold">{moves}</span>
-                  </div>
-                  <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    <span className="text-xs font-bold opacity-70 flex items-center gap-2">{text.level}</span>
-                    <span className="font-mono text-sm font-bold uppercase drop-shadow-sm" style={{ color: t.playerColor }}>
-                      {text[difficulty.toLowerCase() as 'kids' | 'easy' | 'medium' | 'hard']}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <InfoPanel
+              appIsDark={appIsDark}
+              text={text}
+              maze={maze}
+              mazeWidth={MAZE_WIDTH}
+              mazeHeight={MAZE_HEIGHT}
+              theme={theme}
+              visitedPath={visitedPath}
+              optimalPath={optimalPath}
+              replayIndex={replayIndex}
+              difficulty={difficulty}
+              startTime={startTime}
+              gameState={gameState}
+              moves={moves}
+            />
 
             {/* --- Game Controls --- */}
-            <div className={`p-4 rounded-2xl border shadow-sm backdrop-blur-md flex flex-col gap-3 ${appIsDark ? 'bg-slate-900/60 border-white/5' : 'bg-white/70 border-white'}`}>
-              <div className="text-xs uppercase tracking-widest font-bold opacity-50 px-1">{text.controls}</div>
-
-              <div className={`flex rounded-xl p-1 gap-1 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
-                {(['Kids', 'Easy', 'Medium', 'Hard'] as Difficulty[]).map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setDifficulty(d)}
-                    className={`flex-1 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-lg transition-all duration-300 ${difficulty === d
-                      ? 'text-white shadow-md transform scale-100'
-                      : appIsDark ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5 scale-95' : 'text-slate-500 hover:text-slate-800 hover:bg-black/5 scale-95'
-                      }`}
-                    style={difficulty === d ? { background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` } : undefined}
-                  >
-                    {text[d.toLowerCase() as 'kids' | 'easy' | 'medium' | 'hard']}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                <button
-                  onClick={isFinished ? restartLevel : (gameState === 'playing' ? handleGiveUp : startNewLevel)}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10'}`}
-                  style={gameState === 'playing' ? undefined : { background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})`, color: 'white' }}
-                >
-                  {gameState === 'playing' ? <HelpCircle size={14} /> : <Play size={14} fill="currentColor" />}
-                  {gameState === 'playing' ? text.giveUp : text.start || 'Start'}
-                </button>
-                <button
-                  onClick={startNewLevel}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
-                >
-                  <RefreshCw size={14} /> {text.newMaze}
-                </button>
-                <button
-                  onClick={isFinished && gameState === 'won' ? (isReplaying ? stopReplay : startReplay) : undefined}
-                  disabled={!(isFinished && gameState === 'won')}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 ${isFinished && gameState === 'won' ? (appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10') : 'opacity-40 cursor-not-allowed border ' + (appIsDark ? 'border-white/5' : 'border-black/5')}`}
-                >
-                  <RotateCcw size={14} className={isReplaying ? 'animate-spin' : ''} /> {isReplaying ? text.stopReplay : text.pathReplay}
-                </button>
-                <button
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
-                >
-                  {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} {text.sound}
-                </button>
-              </div>
-            </div>
+            <ControlPanel
+              appIsDark={appIsDark}
+              text={text}
+              difficulty={difficulty}
+              setDifficulty={setDifficulty}
+              theme={theme}
+              isFinished={isFinished}
+              gameState={gameState}
+              restartLevel={restartLevel}
+              handleGiveUp={handleGiveUp}
+              startNewLevel={startNewLevel}
+              isReplaying={isReplaying}
+              startReplay={startReplay}
+              stopReplay={stopReplay}
+              soundEnabled={soundEnabled}
+              setSoundEnabled={setSoundEnabled}
+            />
 
             {/* --- Victory Result --- */}
             {isFinished && (
@@ -1486,198 +660,29 @@ export default function Game() {
 
       {/* ========== LEADERBOARD PAGE ========== */}
       {activePage === 'Leaderboard' && (
-        <div className="flex-1 flex flex-col overflow-hidden relative z-10 p-4 md:p-8 max-w-5xl mx-auto w-full">
-          <div className={`flex flex-col h-full rounded-[24px] shadow-2xl overflow-hidden border ${appIsDark ? 'bg-slate-900/80 border-slate-700/50 backdrop-blur-md' : 'bg-white/90 border-slate-200/50 backdrop-blur-md'}`}>
-            <div className={`p-6 border-b flex items-center justify-between ${appIsDark ? 'border-slate-800' : 'border-slate-100'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${appIsDark ? 'bg-amber-900/40 text-amber-400' : 'bg-amber-100 text-amber-500'}`}>
-                  <BarChart3 size={24} />
-                </div>
-                <div>
-                  <h3 className={`font-black tracking-tight text-2xl ${appIsDark ? 'text-white' : 'text-slate-900'}`}>
-                    {lang === 'zh' ? '排行榜' : 'Leaderboard'}
-                  </h3>
-                  <p className={`text-sm mt-0.5 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {lang === 'zh' ? '查看全球顶尖玩家的解谜记录' : 'Check out the puzzle solving records of top players worldwide'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Filters */}
-            <div className={`p-4 flex gap-3 border-b ${appIsDark ? 'border-slate-800 bg-slate-800/30' : 'border-slate-100 bg-slate-50/50'}`}>
-              <select
-                value={leaderboardMode}
-                onChange={(e) => setLeaderboardMode(e.target.value as any)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-colors ${appIsDark ? 'bg-slate-800 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'}`}
-              >
-                <option value="Classic">{lang === 'zh' ? '经典模式' : 'Classic Mode'}</option>
-                <option value="Challenge">{lang === 'zh' ? '挑战模式' : 'Challenge Mode'}</option>
-              </select>
-              <select
-                value={leaderboardDiff}
-                onChange={(e) => setLeaderboardDiff(e.target.value as any)}
-                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-colors ${appIsDark ? 'bg-slate-800 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-slate-200 text-slate-800 hover:border-slate-300'}`}
-              >
-                <option value="Kids">{lang === 'zh' ? '儿童' : 'Kids'}</option>
-                <option value="Easy">{lang === 'zh' ? '简单' : 'Easy'}</option>
-                <option value="Medium">{lang === 'zh' ? '中等' : 'Medium'}</option>
-                <option value="Hard">{lang === 'zh' ? '困难' : 'Hard'}</option>
-              </select>
-            </div>
-
-            {/* List */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {(() => {
-                const filtered = leaderboardData
-                  .filter(r => r.difficulty === leaderboardDiff && r.mode === leaderboardMode)
-                  .sort((a, b) => a.time - b.time || a.moves - b.moves)
-                  .slice(0, 50);
-
-                if (filtered.length === 0) {
-                  return (
-                    <div className="flex flex-col items-center justify-center h-full opacity-50">
-                      <BarChart3 size={48} className={`mb-4 ${appIsDark ? 'text-slate-600' : 'text-slate-300'}`} />
-                      <div className={`text-lg font-bold ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {lang === 'zh' ? '暂无记录' : 'No records yet'}
-                      </div>
-                      <div className={`text-sm mt-1 ${appIsDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                        {lang === 'zh' ? '快去挑战一局吧！' : 'Be the first to set a record!'}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {filtered.map((r, i) => (
-                      <div key={i} className={`flex flex-col p-4 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg ${
-                        i === 0 ? (appIsDark ? 'bg-amber-900/20 border-amber-500/30' : 'bg-amber-50 border-amber-200') : 
-                        i === 1 ? (appIsDark ? 'bg-slate-800/40 border-slate-600/50' : 'bg-slate-50 border-slate-200') :
-                        i === 2 ? (appIsDark ? 'bg-orange-900/20 border-orange-700/30' : 'bg-orange-50 border-orange-200') :
-                        (appIsDark ? 'bg-slate-800/20 border-white/5 hover:bg-slate-800/40' : 'bg-white border-slate-100 hover:bg-slate-50')
-                      }`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
-                              i === 0 ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 
-                              i === 1 ? 'bg-slate-400 text-white shadow-md shadow-slate-400/20' : 
-                              i === 2 ? 'bg-orange-400 text-white shadow-md shadow-orange-400/20' : 
-                              (appIsDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-500')
-                            }`}>
-                              #{i + 1}
-                            </div>
-                            <div className={`font-black text-lg truncate max-w-[120px] ${appIsDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                              {r.name}
-                            </div>
-                          </div>
-                          <div className={`text-xs font-mono font-bold px-2 py-1 rounded-md ${appIsDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
-                            {new Date(r.date).toLocaleDateString()}
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-end mt-auto pt-2 border-t border-black/5 dark:border-white/5">
-                          <div className="flex flex-col">
-                            <span className={`text-[10px] uppercase tracking-wider font-bold opacity-50 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>{text.timer}</span>
-                            <span className={`font-mono font-black text-xl ${appIsDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                              {formatTime(r.time)}
-                            </span>
-                          </div>
-                          <div className="flex flex-col text-right">
-                            <span className={`text-[10px] uppercase tracking-wider font-bold opacity-50 ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>{text.moves}</span>
-                            <span className={`font-mono font-bold text-lg ${appIsDark ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                              {r.moves}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
+        <LeaderboardPage
+          appIsDark={appIsDark}
+          lang={lang}
+          text={text}
+          leaderboardMode={leaderboardMode}
+          setLeaderboardMode={setLeaderboardMode}
+          leaderboardDiff={leaderboardDiff}
+          setLeaderboardDiff={setLeaderboardDiff}
+          leaderboardData={leaderboardData}
+        />
       )}
 
       {/* ========== MODALS ========== */}
       <AnimatePresence>
-        {showLogin && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={`cursor-pointer fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm`}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`cursor-auto w-full max-w-sm rounded-[24px] shadow-2xl overflow-hidden border ${appIsDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md bg-gradient-to-br" style={{ backgroundImage: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` }}>
-                    <User size={20} className="text-white drop-shadow-sm" />
-                  </div>
-                  <div>
-                    <h3 className={`font-black text-xl tracking-tight ${appIsDark ? 'text-white' : 'text-slate-900'}`}>
-                      {lang === 'zh' ? '你好，玩家！' : 'Welcome, Player!'}
-                    </h3>
-                    <p className={`text-sm ${appIsDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {lang === 'zh' ? '为自己取个好听的代号吧' : 'Give yourself a cool codename'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <input
-                    type="text"
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder={lang === 'zh' ? "留空则作为游客进入..." : "Leave blank to play as Guest..."}
-                    className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all ${appIsDark
-                      ? 'bg-slate-800 border-slate-700 text-white focus:border-indigo-500 placeholder-slate-500'
-                      : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-blue-500 placeholder-slate-400'
-                      }`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        localStorage.setItem('ahamaze_player', playerName.trim());
-                        setShowLogin(false);
-                      }
-                    }}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowLogin(false)}
-                    className={`flex-1 py-3 rounded-xl font-bold transition-colors ${appIsDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                      }`}
-                  >
-                    {lang === 'zh' ? '作为游客' : 'Play as Guest'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (playerName.trim()) {
-                        localStorage.setItem('ahamaze_player', playerName.trim());
-                      }
-                      setShowLogin(false);
-                    }}
-                    className="flex-1 py-3 rounded-xl font-bold text-white shadow-md transition-opacity hover:opacity-90"
-                    style={{ background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` }}
-                  >
-                    {lang === 'zh' ? '保存进入' : 'Save & Play'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
+        <LoginModal
+          showLogin={showLogin}
+          setShowLogin={setShowLogin}
+          appIsDark={appIsDark}
+          theme={theme}
+          lang={lang}
+          playerName={playerName}
+          setPlayerName={setPlayerName}
+        />
       </AnimatePresence>
     </div>
   );
