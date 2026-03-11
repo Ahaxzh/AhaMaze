@@ -402,7 +402,11 @@ export default function Game() {
 
   // Toggle between dark/light base on current theme
   const toggleDarkLight = () => {
-    if (difficulty === 'Kids') return; // Cannot toggle theme in Kids mode
+    if (difficulty === 'Kids') {
+      // Allow Kids mode to toggle between its two themes: Princess (Light) and Starry (Dark)
+      setTheme(theme === 'Princess' ? 'Starry' : 'Princess');
+      return; 
+    }
     if (appIsDark) {
       setTheme(theme === 'Retro' ? 'Retro' : (theme === 'Neon' ? 'Light' : 'Amber'));
     } else {

@@ -43,7 +43,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           <button
             onClick={() => setActivePage('Classic')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Classic'
-              ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
+              ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
           >
@@ -61,7 +61,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           <button
             onClick={() => setActivePage('Leaderboard')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Leaderboard'
-              ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
+              ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
           >
@@ -74,7 +74,7 @@ export const TopNavbar = React.memo(function TopNavbar({
            <button
             onClick={() => setActivePage('Classic')}
             className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Classic'
-              ? `bg-white shadow-sm text-slate-800 ${appIsDark ? 'bg-slate-800 text-white' : ''}`
+              ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
           >
@@ -92,7 +92,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           <button
             onClick={() => setActivePage('Leaderboard')}
             className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Leaderboard'
-              ? `shadow-sm text-amber-600 bg-amber-100 ${appIsDark ? 'bg-amber-900/40 text-amber-400 border border-amber-500/30' : ''}`
+              ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
           >
