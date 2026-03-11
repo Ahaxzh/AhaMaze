@@ -63,7 +63,13 @@ export const LoginModal = React.memo(function LoginModal({
                 }`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  localStorage.setItem('ahamaze_player', playerName.trim());
+                  const val = playerName.trim();
+                  if (val) {
+                    localStorage.setItem('ahamaze_player', val);
+                  } else {
+                    setPlayerName('');
+                    localStorage.removeItem('ahamaze_player');
+                  }
                   setShowLogin(false);
                 }
               }}
@@ -73,7 +79,11 @@ export const LoginModal = React.memo(function LoginModal({
 
           <div className="flex gap-3">
             <button
-              onClick={() => setShowLogin(false)}
+              onClick={() => {
+                setPlayerName('');
+                localStorage.removeItem('ahamaze_player');
+                setShowLogin(false);
+              }}
               className={`flex-1 py-3 rounded-xl font-bold transition-colors ${appIsDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
             >

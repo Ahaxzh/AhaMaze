@@ -101,14 +101,9 @@ export default function Game() {
   const text = TEXTS[lang];
   const t = THEME_CONFIGS[theme];
   // Determine if the current App-level requested aesthetics is dark based on the active theme
-  // We use this to know which Kids mode version to show if we switch TO Kids mode.
   const appIsDark = useMemo(() => {
-    // If we are IN a kids mode, we check the global body class instead
-    if (theme === 'Princess' || theme === 'Starry') {
-      return document.documentElement.classList.contains('dark');
-    }
     return t.ambience === 'dark';
-  }, [theme, t.ambience]);
+  }, [t.ambience]);
 
   // Background pattern: use SVG dots instead of overlapping circles
   const textureBg = useMemo(() => {
