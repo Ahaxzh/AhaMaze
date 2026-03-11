@@ -122,9 +122,9 @@ export const MazeCanvas = React.memo(function MazeCanvas({
     if (!fogCanvasRef.current) {
         fogCanvasRef.current = document.createElement('canvas');
     }
-    fogCanvasRef.current.width = pixelWidth;
-    fogCanvasRef.current.height = pixelHeight;
-  }, [pixelWidth, pixelHeight, gameMode]);
+    fogCanvasRef.current.width = pixelWidth * dpr;
+    fogCanvasRef.current.height = pixelHeight * dpr;
+  }, [pixelWidth, pixelHeight, gameMode, dpr]);
 
   // 3. Main Fast-Render Loop (Draws cached objects and dynamic paths/fog)
   useEffect(() => {
@@ -222,10 +222,12 @@ export const MazeCanvas = React.memo(function MazeCanvas({
         const ftx = fogCanvas.getContext('2d');
         if (ftx) {
             // Fill fog with the dark/light ambiance color
+            ftx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
+            ftx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
             ftx.globalCompositeOperation = 'source-over';
             ftx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
             if (theme === 'Princess') ftx.fillStyle = 'rgba(255, 240, 245, 0.98)';
-            ftx.fillRect(0, 0, pixelWidth, pixelHeight);
+            ftx.fillRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
 
             // Carve out holes with destination-out
             ftx.globalCompositeOperation = 'destination-out';
@@ -271,7 +273,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
         ctx.globalCompositeOperation = 'source-over';
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.drawImage(fogCanvas, 0, 0);
+        ctx.drawImage(fogCanvas, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr, pixelHeight * dpr);
         ctx.restore();
     }
 
