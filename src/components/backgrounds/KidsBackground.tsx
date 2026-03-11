@@ -35,7 +35,7 @@ export const KidsBackground = React.memo(function KidsBackground({ isDark }: { i
   }, []);
 
   return (
-    <div className={`absolute inset-0 overflow-hidden pointer-events-none transition-colors duration-1000 ${isDark ? 'bg-gradient-to-br from-[#2e1025] via-[#4a1c40] to-[#2e1045]' : 'bg-gradient-to-br from-pink-200 via-pink-100 to-rose-200'}`}>
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${isDark ? 'bg-gradient-to-br from-[#2e1025] via-[#4a1c40] to-[#2e1045]' : 'bg-gradient-to-br from-pink-200 via-pink-100 to-rose-200'}`}>
       <div className="absolute inset-0 opacity-40" style={{
         backgroundImage: `radial-gradient(${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)'} 4px, transparent 4px)`,
         backgroundSize: '40px 40px'

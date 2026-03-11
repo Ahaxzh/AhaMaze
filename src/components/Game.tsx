@@ -432,7 +432,7 @@ export default function Game() {
   // =========================================
   return (
     <div
-      className={`fixed inset-0 flex flex-col font-sans overflow-hidden select-none transition-colors duration-200 ${t.bg} ${t.text}`}
+      className={`fixed inset-0 flex flex-col font-sans overflow-hidden select-none ${t.bg} ${t.text}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -468,11 +468,11 @@ export default function Game() {
         <div className="flex-1 flex flex-col items-center justify-center relative min-w-0" ref={containerRef}>
           {/* Maze container Glow */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="w-[70%] h-[70%] blur-[80px] opacity-20 rounded-full transition-colors duration-1000" style={{ backgroundColor: t.playerColor }} />
+            <div className="w-[70%] h-[70%] blur-[80px] opacity-20 rounded-full" style={{ backgroundColor: t.playerColor }} />
           </div>
           {/* Maze container glass frame */}
           <div
-            className={`relative backdrop-blur-md rounded-2xl shadow-xl border transition-all duration-500 ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
+            className={`relative backdrop-blur-md rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
             style={{ width: 'fit-content', height: 'fit-content', maxWidth: '100%', maxHeight: '100%' }}
           >
             {/* The inner bounds that wrap the maze, with a small padding so walls don't clip against rounded border */}

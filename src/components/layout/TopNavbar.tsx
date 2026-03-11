@@ -26,7 +26,7 @@ export const TopNavbar = React.memo(function TopNavbar({
 
   return (
     <div className="relative z-20 shrink-0 p-2 md:p-4 pb-0">
-      <nav className={`flex items-center justify-between p-2 md:p-3 px-4 md:px-6 rounded-2xl border shadow-sm backdrop-blur-xl transition-colors duration-500 ${appIsDark ? 'bg-slate-900/40 border-white/5' : 'bg-white/60 border-black/5'}`}>
+      <nav className={`flex items-center justify-between p-2 md:p-3 px-4 md:px-6 rounded-2xl border shadow-sm backdrop-blur-xl ${appIsDark ? 'bg-slate-900/40 border-white/5' : 'bg-white/60 border-black/5'}`}>
 
         {/* Left: Logo */}
         <div className="flex items-center gap-3">
@@ -39,10 +39,10 @@ export const TopNavbar = React.memo(function TopNavbar({
         </div>
 
         {/* Center: Main App Router Tabs */}
-        <div className={`hidden md:flex items-center p-1 rounded-xl mx-4 transition-colors duration-500 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
+        <div className={`hidden md:flex items-center p-1 rounded-xl mx-4 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
           <button
             onClick={() => setActivePage('Classic')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Classic'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Classic'
               ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -51,7 +51,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
           <button
             onClick={() => setActivePage('Challenge')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Challenge'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Challenge'
               ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -60,7 +60,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
           <button
             onClick={() => setActivePage('Leaderboard')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-300 ${activePage === 'Leaderboard'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Leaderboard'
               ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -73,7 +73,7 @@ export const TopNavbar = React.memo(function TopNavbar({
         <div className={`md:hidden flex items-center p-1 rounded-xl mx-2 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
            <button
             onClick={() => setActivePage('Classic')}
-            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Classic'
+            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Classic'
               ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -82,7 +82,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
           <button
             onClick={() => setActivePage('Challenge')}
-            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Challenge'
+            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Challenge'
               ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -91,7 +91,7 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
           <button
             onClick={() => setActivePage('Leaderboard')}
-            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${activePage === 'Leaderboard'
+            className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Leaderboard'
               ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
@@ -102,10 +102,10 @@ export const TopNavbar = React.memo(function TopNavbar({
 
         {/* Right: Controls */}
         <div className="flex items-center gap-2">
-          <button onClick={toggleDarkLight} className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-yellow-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
+          <button onClick={toggleDarkLight} className={`p-2 rounded-xl transition-transform hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-yellow-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
             {appIsDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
+          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className={`p-2 rounded-xl transition-transform hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
             <Globe size={18} />
           </button>
           {/* User profile / Login */}

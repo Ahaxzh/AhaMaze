@@ -156,9 +156,9 @@ export const LeaderboardPage = React.memo(function LeaderboardPage({
                       {/* Pedestal */}
                       <div className={`w-full ${heightClass} rounded-t-3xl shadow-2xl flex flex-col items-center justify-center p-4 pb-2 bg-gradient-to-b ${rankColor} transition-transform hover:scale-[1.03] cursor-default border-t-2 relative overflow-hidden backdrop-blur-sm`}>
                         <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className={`flex flex-col items-center z-10 ${appIsDark ? 'text-white drop-shadow-md' : ''}`}>
+                        <div className={`flex flex-col items-center z-10 ${appIsDark ? 'text-white drop-shadow-md' : 'text-slate-900 drop-shadow-sm'}`}>
                           <span className="font-mono font-black text-3xl md:text-4xl tracking-tighter">{formatTime(entry.time)}</span>
-                          <div className="flex items-center gap-1.5 opacity-80 mt-2 bg-black/10 px-3 py-1 rounded-full backdrop-blur-md">
+                          <div className="flex items-center gap-1.5 opacity-90 mt-1">
                             <Footprints size={12} />
                             <span className="font-bold text-xs tracking-wider">{entry.moves}</span>
                           </div>
