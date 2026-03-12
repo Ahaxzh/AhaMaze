@@ -19,13 +19,13 @@ export const KidsBackground = React.memo(function KidsBackground({ isDark }: { i
   const [elements, setElements] = useState<KidsElement[]>([]);
 
   useEffect(() => {
-    const newElements: KidsElement[] = Array.from({ length: 70 }).map((_, i) => {
+    const newElements: KidsElement[] = Array.from({ length: 100 }).map((_, i) => {
       // Visual sizes: 24px - 64px
       const visualSize = 24 + Math.random() * 40;
 
-      // Left channel: 0vw to 18vw, Right channel: 82vw to 98vw (avoid center maze)
+      // Wider channels: Left 0-28vw, Right 72-98vw (fill more blank space)
       const isLeft = Math.random() > 0.5;
-      const left = isLeft ? Math.random() * 18 : 82 + Math.random() * 16;
+      const left = isLeft ? Math.random() * 28 : 72 + Math.random() * 26;
 
       return {
         id: i,
