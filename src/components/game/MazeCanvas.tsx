@@ -29,17 +29,17 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   // Only re-runs when the maze structure or theme actually changes
   useEffect(() => {
     if (maze.length === 0 || pixelWidth === 0 || pixelHeight === 0) return;
-    
+
     if (!bgCanvasRef.current) {
       bgCanvasRef.current = document.createElement('canvas');
     }
     const bgCanvas = bgCanvasRef.current;
     bgCanvas.width = pixelWidth * dpr;
     bgCanvas.height = pixelHeight * dpr;
-    
+
     const ctx = bgCanvas.getContext('2d');
     if (!ctx) return;
-    
+
     ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
     ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
 
@@ -81,7 +81,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
     ctx.lineCap = 'square';
     ctx.lineJoin = 'miter';
     ctx.beginPath();
-    
+
     const rows = maze.length;
     const cols = maze[0]?.length ?? 0;
     for (let y = 0; y < rows; y++) {
@@ -118,9 +118,9 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   useEffect(() => {
     if (gameMode !== 'Challenge') return;
     if (pixelWidth === 0 || pixelHeight === 0) return;
-    
+
     if (!fogCanvasRef.current) {
-        fogCanvasRef.current = document.createElement('canvas');
+      fogCanvasRef.current = document.createElement('canvas');
     }
     fogCanvasRef.current.width = pixelWidth * dpr;
     fogCanvasRef.current.height = pixelHeight * dpr;
@@ -140,10 +140,10 @@ export const MazeCanvas = React.memo(function MazeCanvas({
 
     // Blit the static background (walls, colors, ends) in exactly 1 draw call
     if (bgCanvasRef.current) {
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to draw cached image 1:1
-        ctx.drawImage(bgCanvasRef.current, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr + 1.5, pixelHeight * dpr + 1.5);
-        ctx.restore();
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to draw cached image 1:1
+      ctx.drawImage(bgCanvasRef.current, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr + 1.5, pixelHeight * dpr + 1.5);
+      ctx.restore();
     }
 
     // Dynamic Paths
@@ -213,68 +213,68 @@ export const MazeCanvas = React.memo(function MazeCanvas({
 
     // Dynamic Fog
     if (gameMode === 'Challenge' && fogCountdown === 0 && !!fogCanvasRef.current) {
-        // We use destination-in on the main canvas so the fog cutouts reveal the maze underneath
-        // But the fog needs an opaque layer over everything else. 
-        // 1. We draw an opaque rect matching the ambient color.
-        // Wait, if it's over everything, we can just do traditional approach but use the persistent fogCanvas.
-        
-        const fogCanvas = fogCanvasRef.current;
-        const ftx = fogCanvas.getContext('2d');
-        if (ftx) {
-            // Fill fog with the dark/light ambiance color
-            ftx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
-            ftx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
-            ftx.globalCompositeOperation = 'source-over';
-            ftx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
-            if (theme === 'Princess') ftx.fillStyle = 'rgba(255, 240, 245, 0.98)';
-            ftx.fillRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+      // We use destination-in on the main canvas so the fog cutouts reveal the maze underneath
+      // But the fog needs an opaque layer over everything else. 
+      // 1. We draw an opaque rect matching the ambient color.
+      // Wait, if it's over everything, we can just do traditional approach but use the persistent fogCanvas.
 
-            // Carve out holes with destination-out
-            ftx.globalCompositeOperation = 'destination-out';
-            ftx.filter = `blur(${cellSize * 1.2}px)`;
-            
-            // Important: destination-out makes pixels transparent wherever we draw. 
-            // So we draw opaque black (color doesn't matter, just needs alpha 1).
-            ftx.fillStyle = 'rgba(0,0,0,1)';
-            ftx.strokeStyle = 'rgba(0,0,0,1)';
+      const fogCanvas = fogCanvasRef.current;
+      const ftx = fogCanvas.getContext('2d');
+      if (ftx) {
+        // Fill fog with the dark/light ambiance color
+        ftx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
+        ftx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+        ftx.globalCompositeOperation = 'source-over';
+        ftx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
+        if (theme === 'Princess') ftx.fillStyle = 'rgba(255, 240, 245, 0.98)';
+        ftx.fillRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
 
-            if (visitedPath.length > 0) {
-              ftx.beginPath();
-              ftx.lineWidth = cellSize * 4.5;
-              ftx.lineCap = 'round';
-              ftx.lineJoin = 'round';
-              ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
-              for (let i = 1; i < visitedPath.length; i++) {
-                ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
-              }
-              ftx.stroke();
-            }
+        // Carve out holes with destination-out
+        ftx.globalCompositeOperation = 'destination-out';
+        ftx.filter = `blur(${cellSize * 1.2}px)`;
 
-            const fpx = playerPos.x * cellSize + cellSize / 2;
-            const fpy = playerPos.y * cellSize + cellSize / 2;
-            ftx.beginPath();
-            ftx.arc(fpx, fpy, cellSize * 3.5, 0, Math.PI * 2);
-            ftx.fill();
+        // Important: destination-out makes pixels transparent wherever we draw. 
+        // So we draw opaque black (color doesn't matter, just needs alpha 1).
+        ftx.fillStyle = 'rgba(0,0,0,1)';
+        ftx.strokeStyle = 'rgba(0,0,0,1)';
 
-            // Permanent small holes at start/end
-            // We use standard fill style alpha since destination-out considers the alpha channel.
-            ftx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            ftx.beginPath(); ftx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-            const fendCx = (mazeWidth - 1) * cellSize + cellSize / 2;
-            const fendCy = (mazeHeight - 1) * cellSize + cellSize / 2;
-            ftx.beginPath(); ftx.arc(fendCx, fendCy, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
-            
-            // Reset composite state for next frame
-            ftx.globalCompositeOperation = 'source-over';
-            ftx.filter = 'none';
+        if (visitedPath.length > 0) {
+          ftx.beginPath();
+          ftx.lineWidth = cellSize * 4.5;
+          ftx.lineCap = 'round';
+          ftx.lineJoin = 'round';
+          ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
+          for (let i = 1; i < visitedPath.length; i++) {
+            ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
+          }
+          ftx.stroke();
         }
 
-        // Draw the fully prepared fog mask over the main canvas
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.drawImage(fogCanvas, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr, pixelHeight * dpr);
-        ctx.restore();
+        const fpx = playerPos.x * cellSize + cellSize / 2;
+        const fpy = playerPos.y * cellSize + cellSize / 2;
+        ftx.beginPath();
+        ftx.arc(fpx, fpy, cellSize * 3.5, 0, Math.PI * 2);
+        ftx.fill();
+
+        // Permanent small holes at start/end
+        // We use standard fill style alpha since destination-out considers the alpha channel.
+        ftx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ftx.beginPath(); ftx.arc(cellSize / 2, cellSize / 2, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
+        const fendCx = (mazeWidth - 1) * cellSize + cellSize / 2;
+        const fendCy = (mazeHeight - 1) * cellSize + cellSize / 2;
+        ftx.beginPath(); ftx.arc(fendCx, fendCy, cellSize * 1.5, 0, Math.PI * 2); ftx.fill();
+
+        // Reset composite state for next frame
+        ftx.globalCompositeOperation = 'source-over';
+        ftx.filter = 'none';
+      }
+
+      // Draw the fully prepared fog mask over the main canvas
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(fogCanvas, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr, pixelHeight * dpr);
+      ctx.restore();
     }
 
   }, [maze.length, pixelWidth, pixelHeight, visitedPath, optimalPath, replayIndex, t.trailColor, t.playerColor, t.ambience, t.endColor, theme, dpr, cellSize, mazeWidth, mazeHeight, isKidsMode, gameMode, fogCountdown, playerPos]);
@@ -316,13 +316,13 @@ export const Player = React.memo(function Player({ position, size, theme, isKids
   );
 });
 
-export const EndMarkerPulse = React.memo(function EndMarkerPulse({ mazeWidth, mazeHeight, cellSize, theme, isKidsMode, playerEmoji }: { mazeWidth: number; mazeHeight: number; cellSize: number; theme: Theme; isKidsMode: boolean; playerEmoji: string }) {
+export const EndMarkerPulse = React.memo(function EndMarkerPulse({ mazeWidth, mazeHeight, cellSize, theme, isKidsMode }: { mazeWidth: number; mazeHeight: number; cellSize: number; theme: Theme; isKidsMode: boolean }) {
   const t = THEME_CONFIGS[theme];
   return (
     <div className="absolute z-10 flex items-center justify-center pointer-events-none" style={{ left: (mazeWidth - 1) * cellSize, top: (mazeHeight - 1) * cellSize, width: cellSize, height: cellSize }}>
       {isKidsMode ? (
-        <motion.div animate={{ scale: [1, 1.25, 1], rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.2 }} className="drop-shadow-md text-rose-500" style={{ fontSize: cellSize * 0.6 }}>
-          {playerEmoji}
+        <motion.div animate={{ scale: [1, 1.25, 1], rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.2 }} className="drop-shadow-md" style={{ fontSize: cellSize * 0.6 }}>
+          💖
         </motion.div>
       ) : (
         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="rounded-full shadow-lg" style={{ width: cellSize * 0.5, height: cellSize * 0.5, backgroundColor: t.endColor }} />
