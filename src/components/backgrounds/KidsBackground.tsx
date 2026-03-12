@@ -23,9 +23,10 @@ export const KidsBackground = React.memo(function KidsBackground({ isDark }: { i
       // Visual sizes: 24px - 64px
       const visualSize = 24 + Math.random() * 40;
 
-      // Wider channels: Left 0-28vw, Right 72-98vw (fill more blank space)
-      const isLeft = Math.random() > 0.5;
-      const left = isLeft ? Math.random() * 28 : 72 + Math.random() * 26;
+      // Full-width uniform distribution (0~96vw).
+      // The maze container sits above with backdrop-blur, so emojis behind it
+      // are naturally obscured — no need for artificial avoidance channels.
+      const left = Math.random() * 96;
 
       return {
         id: i,
