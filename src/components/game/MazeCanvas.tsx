@@ -290,7 +290,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   );
 });
 
-export const Player = React.memo(function Player({ position, size, theme, isKidsMode }: { position: Position; size: number; theme: Theme; isKidsMode: boolean }) {
+export const Player = React.memo(function Player({ position, size, theme, isKidsMode, playerEmoji }: { position: Position; size: number; theme: Theme; isKidsMode: boolean; playerEmoji: string }) {
   const t = THEME_CONFIGS[theme];
   return (
     <motion.div
@@ -306,7 +306,7 @@ export const Player = React.memo(function Player({ position, size, theme, isKids
           transition={{ repeat: Infinity, duration: 0.8 }}
           style={{ fontSize: size * 0.7, lineHeight: 1 }}
           className="drop-shadow-sm"
-        >💖</motion.div>
+        >{playerEmoji}</motion.div>
       ) : (
         <div className="rounded-full shadow-lg relative" style={{ width: size * 0.5, height: size * 0.5, backgroundColor: t.playerColor }}>
           <div className="absolute inset-0 rounded-full bg-white opacity-60 blur-[1px]" />
@@ -316,13 +316,13 @@ export const Player = React.memo(function Player({ position, size, theme, isKids
   );
 });
 
-export const EndMarkerPulse = React.memo(function EndMarkerPulse({ mazeWidth, mazeHeight, cellSize, theme, isKidsMode }: { mazeWidth: number; mazeHeight: number; cellSize: number; theme: Theme; isKidsMode: boolean }) {
+export const EndMarkerPulse = React.memo(function EndMarkerPulse({ mazeWidth, mazeHeight, cellSize, theme, isKidsMode, playerEmoji }: { mazeWidth: number; mazeHeight: number; cellSize: number; theme: Theme; isKidsMode: boolean; playerEmoji: string }) {
   const t = THEME_CONFIGS[theme];
   return (
     <div className="absolute z-10 flex items-center justify-center pointer-events-none" style={{ left: (mazeWidth - 1) * cellSize, top: (mazeHeight - 1) * cellSize, width: cellSize, height: cellSize }}>
       {isKidsMode ? (
         <motion.div animate={{ scale: [1, 1.25, 1], rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.2 }} className="drop-shadow-md text-rose-500" style={{ fontSize: cellSize * 0.6 }}>
-          💖
+          {playerEmoji}
         </motion.div>
       ) : (
         <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 2 }} className="rounded-full shadow-lg" style={{ width: cellSize * 0.5, height: cellSize * 0.5, backgroundColor: t.endColor }} />

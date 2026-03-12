@@ -61,6 +61,7 @@ export default function Game() {
 
   // Local Player Identity & Leaderboard
   const [playerName, setPlayerName] = useState<string>('');
+  const [playerEmoji, setPlayerEmoji] = useState<string>(() => localStorage.getItem('ahamaze_avatar') || '💖');
   const [showLogin, setShowLogin] = useState(false);
   const [leaderboardMode, setLeaderboardMode] = useState<GameMode>('Classic');
   const [leaderboardDiff, setLeaderboardDiff] = useState<Difficulty>('Easy');
@@ -486,10 +487,10 @@ export default function Game() {
                       theme={theme} visitedPath={visitedPath} optimalPath={optimalPath} replayIndex={replayIndex} difficulty={difficulty}
                       gameMode={gameMode} fogCountdown={fogCountdown} playerPos={playerPos} />
                     {!isFinished && (
-                      <EndMarkerPulse mazeWidth={MAZE_WIDTH} mazeHeight={MAZE_HEIGHT} cellSize={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} />
+                      <EndMarkerPulse mazeWidth={MAZE_WIDTH} mazeHeight={MAZE_HEIGHT} cellSize={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} playerEmoji={playerEmoji} />
                     )}
                     {!isReplaying && (
-                      <Player position={playerPos} size={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} />
+                      <Player position={playerPos} size={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} playerEmoji={playerEmoji} />
                     )}
                   </>
                 )}
@@ -681,6 +682,8 @@ export default function Game() {
           lang={lang}
           playerName={playerName}
           setPlayerName={setPlayerName}
+          playerEmoji={playerEmoji}
+          setPlayerEmoji={setPlayerEmoji}
         />
       </AnimatePresence>
     </div>
