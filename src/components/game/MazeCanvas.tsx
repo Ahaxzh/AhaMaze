@@ -19,6 +19,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   const pixelHeight = Math.round(mazeHeight * cellSize);
   const t = THEME_CONFIGS[theme];
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const canvasPadding = 2; // Extra padding to prevent border clipping
   const isKidsMode = difficulty === 'Kids';
 
   // Offscreen render targets for caching static layers to reach 120fps
@@ -34,13 +35,13 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       bgCanvasRef.current = document.createElement('canvas');
     }
     const bgCanvas = bgCanvasRef.current;
-    bgCanvas.width = pixelWidth * dpr;
-    bgCanvas.height = pixelHeight * dpr;
+    bgCanvas.width = (pixelWidth + canvasPadding * 2) * dpr;
+    bgCanvas.height = (pixelHeight + canvasPadding * 2) * dpr;
 
     const ctx = bgCanvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
+    ctx.setTransform(dpr, 0, 0, dpr, canvasPadding * dpr + 0.5, canvasPadding * dpr + 0.5);
     ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
 
     ctx.fillStyle = t.cellBgColor || t.bg;
@@ -135,14 +136,18 @@ export const MazeCanvas = React.memo(function MazeCanvas({
 
     // We do NOT clear the whole canvas if we can avoid it, but we need to redraw
     // everything. However, using drawImage is extremely fast compared to loops.
-    ctx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
-    ctx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+    ctx.setTransform(dpr, 0, 0, dpr, canvasPadding * dpr + 0.5, canvasPadding * dpr + 0.5);
+    ctx.clearRect(-canvasPadding - 1, -canvasPadding - 1, pixelWidth + canvasPadding * 2 + 2, pixelHeight + canvasPadding * 2 + 2);
 
     // Blit the static background (walls, colors, ends) in exactly 1 draw call
     if (bgCanvasRef.current) {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to draw cached image 1:1
-      ctx.drawImage(bgCanvasRef.current, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr + 1.5, pixelHeight * dpr + 1.5);
+      ctx.drawImage(
+        bgCanvasRef.current, 
+        0, 0, (pixelWidth + canvasPadding * 2) * dpr, (pixelHeight + canvasPadding * 2) * dpr, 
+        0, 0, (pixelWidth + canvasPadding * 2) * dpr, (pixelHeight + canvasPadding * 2) * dpr
+      );
       ctx.restore();
     }
 
@@ -222,12 +227,12 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       const ftx = fogCanvas.getContext('2d');
       if (ftx) {
         // Fill fog with the dark/light ambiance color
-        ftx.setTransform(dpr, 0, 0, dpr, 0.5, 0.5);
-        ftx.clearRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+        ftx.setTransform(dpr, 0, 0, dpr, canvasPadding * dpr + 0.5, canvasPadding * dpr + 0.5);
+        ftx.clearRect(-canvasPadding - 1, -canvasPadding - 1, pixelWidth + canvasPadding * 2 + 2, pixelHeight + canvasPadding * 2 + 2);
         ftx.globalCompositeOperation = 'source-over';
         ftx.fillStyle = t.ambience === 'dark' ? 'rgba(0, 0, 0, 0.98)' : 'rgba(255, 255, 255, 0.98)';
         if (theme === 'Princess') ftx.fillStyle = 'rgba(255, 240, 245, 0.98)';
-        ftx.fillRect(-1, -1, pixelWidth + 2, pixelHeight + 2);
+        ftx.fillRect(-canvasPadding, -canvasPadding, pixelWidth + canvasPadding * 2, pixelHeight + canvasPadding * 2);
 
         // Carve out holes with destination-out
         ftx.globalCompositeOperation = 'destination-out';
@@ -273,7 +278,11 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       ctx.globalCompositeOperation = 'source-over';
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(fogCanvas, 0, 0, pixelWidth * dpr, pixelHeight * dpr, 0, 0, pixelWidth * dpr, pixelHeight * dpr);
+      ctx.drawImage(
+        fogCanvas, 
+        0, 0, (pixelWidth + canvasPadding * 2) * dpr, (pixelHeight + canvasPadding * 2) * dpr, 
+        0, 0, (pixelWidth + canvasPadding * 2) * dpr, (pixelHeight + canvasPadding * 2) * dpr
+      );
       ctx.restore();
     }
 
@@ -281,11 +290,16 @@ export const MazeCanvas = React.memo(function MazeCanvas({
 
   return (
     <canvas
-      className="block"
+      className="absolute pointer-events-none"
       ref={canvasRef}
-      width={pixelWidth * dpr}
-      height={pixelHeight * dpr}
-      style={{ width: pixelWidth, height: pixelHeight }}
+      width={(pixelWidth + canvasPadding * 2) * dpr}
+      height={(pixelHeight + canvasPadding * 2) * dpr}
+      style={{ 
+        width: pixelWidth + canvasPadding * 2, 
+        height: pixelHeight + canvasPadding * 2, 
+        left: -canvasPadding, 
+        top: -canvasPadding 
+      }}
     />
   );
 });
@@ -338,10 +352,11 @@ export function downloadMazeImage(
   const exportCellSize = 16;
   const padding = 60;
   const statsHeight = 100;
+  const drawPadding = 4; // Extra padding for the export to ensure lines are not clipped
   const w = mazeWidth * exportCellSize;
   const h = mazeHeight * exportCellSize;
-  const totalW = w + padding * 2;
-  const totalH = h + padding + statsHeight;
+  const totalW = w + padding * 2 + drawPadding * 2;
+  const totalH = h + padding + statsHeight + drawPadding * 2;
   const t = THEME_CONFIGS[theme];
 
   const canvas = document.createElement('canvas');
@@ -350,7 +365,7 @@ export function downloadMazeImage(
 
   // We are missing bgRaw in THEME_CONFIGS. We can fallback or derive from bg.
   ctx.fillStyle = t.bg || '#ffffff'; ctx.fillRect(0, 0, totalW, totalH);
-  ctx.save(); ctx.translate(padding, padding - 20);
+  ctx.save(); ctx.translate(padding + drawPadding, padding + drawPadding - 20);
   ctx.fillStyle = t.playerColor; ctx.font = 'bold 18px Inter, sans-serif';
   ctx.fillText('AhaMaze', 0, -10);
   ctx.fillStyle = t.ambience === 'light' ? '#475569' : '#94a3b8';
@@ -408,8 +423,8 @@ export function downloadMazeImage(
 
   // Add the explicit outer border to the exported image as well
   ctx.lineWidth = 1.5;
-  const offset = 1.5 / 2;
-  ctx.strokeRect(offset, offset, w - 1.5, h - 1.5);
+  const borderOffset = 1.5 / 2;
+  ctx.strokeRect(-borderOffset, -borderOffset, w + 1.5, h + 1.5);
 
   ctx.restore();
 
