@@ -161,6 +161,7 @@ export const TEXTS: Record<Language, any> = {
     stats: 'STATS & MAP', controls: 'CONTROLS',
     classicMode: 'Classic', challengeMode: 'Challenge',
     fogWarning: 'Fog Descending In',
+    rating: 'Rating',
   },
   zh: {
     title: 'AhaMaze', home: '首页', challenge: '挑战', leaderboard: '排行榜',
@@ -174,6 +175,7 @@ export const TEXTS: Record<Language, any> = {
     stats: '信息与地图', controls: '游戏操作',
     classicMode: '经典', challengeMode: '挑战',
     fogWarning: '迷雾降临倒计时',
+    rating: '评价',
   }
 };
 

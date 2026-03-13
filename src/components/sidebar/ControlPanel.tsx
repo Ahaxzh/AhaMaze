@@ -36,11 +36,13 @@ export const ControlPanel = React.memo(function ControlPanel({
           <button
             key={d}
             onClick={() => setDifficulty(d)}
-            className={`flex-1 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-lg transition-transform duration-300 ${difficulty === d
-              ? 'text-white shadow-md transform scale-100'
-              : appIsDark ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5 scale-95' : 'text-slate-500 hover:text-slate-800 hover:bg-black/5 scale-95'
+            className={`flex-1 py-1.5 text-[11px] uppercase tracking-wider font-bold rounded-lg transition-all duration-300 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${difficulty === d
+              ? 'text-white shadow-md scale-100'
+              : appIsDark ? 'text-slate-400 hover:text-slate-200 hover:bg-white/5 opacity-60 hover:opacity-100' : 'text-slate-500 hover:text-slate-800 hover:bg-black/5 opacity-60 hover:opacity-100'
               }`}
             style={difficulty === d ? { background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` } : undefined}
+            aria-label={`Difficulty: ${d}`}
+            aria-pressed={difficulty === d}
           >
             {text[d.toLowerCase() as 'kids' | 'easy' | 'medium' | 'hard']}
           </button>
@@ -50,7 +52,7 @@ export const ControlPanel = React.memo(function ControlPanel({
       <div className="grid grid-cols-2 gap-2 mt-1">
         <button
           onClick={isFinished ? restartLevel : (gameState === 'playing' ? handleGiveUp : startNewLevel)}
-          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10'}`}
+          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-offset-2 outline-none ${appIsDark ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10'}`}
           style={gameState === 'playing' ? undefined : { background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})`, color: 'white' }}
         >
           {gameState === 'playing' ? <HelpCircle size={14} /> : <Play size={14} fill="currentColor" />}
@@ -58,20 +60,20 @@ export const ControlPanel = React.memo(function ControlPanel({
         </button>
         <button
           onClick={startNewLevel}
-          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
+          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-offset-w outline-none ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
         >
           <RefreshCw size={14} /> {text.newMaze}
         </button>
         <button
           onClick={isFinished && gameState === 'won' ? (isReplaying ? stopReplay : startReplay) : undefined}
           disabled={!(isFinished && gameState === 'won')}
-          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 ${isFinished && gameState === 'won' ? (appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10') : 'opacity-40 cursor-not-allowed border ' + (appIsDark ? 'border-white/5' : 'border-black/5')}`}
+          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 hover:scale-[1.02] focus-visible:ring-2 outline-none ${isFinished && gameState === 'won' ? (appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10') : 'opacity-40 cursor-not-allowed border ' + (appIsDark ? 'border-white/5' : 'border-black/5')}`}
         >
           <RotateCcw size={14} className={isReplaying ? 'animate-spin' : ''} /> {isReplaying ? text.stopReplay : text.pathReplay}
         </button>
         <button
           onClick={() => setSoundEnabled(!soundEnabled)}
-          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5 ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
+          className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 hover:scale-[1.02] focus-visible:ring-2 outline-none ${appIsDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10'}`}
         >
           {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />} {text.sound}
         </button>

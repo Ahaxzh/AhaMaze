@@ -72,17 +72,17 @@ export const InfoPanel = React.memo(function InfoPanel({
 
         {/* Right: Info */}
         <div className="flex-1 flex flex-col justify-center gap-2">
-          <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
-            <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Clock size={12} /> {text.timer}</span>
-            <TimerDisplay startTime={startTime} gameState={gameState} className="font-mono text-sm font-bold tracking-tight" />
+          <div className={`flex justify-between items-center px-4 py-2.5 rounded-xl border transition-colors ${appIsDark ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/5'}`}>
+            <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Clock size={12} className={t.text} /> {text.timer}</span>
+            <TimerDisplay startTime={startTime} gameState={gameState} className="font-mono text-sm font-black tracking-tight" />
           </div>
-          <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
-            <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Footprints size={12} /> {text.moves}</span>
-            <span className="font-mono text-sm font-bold">{moves}</span>
+          <div className={`flex justify-between items-center px-4 py-2.5 rounded-xl border transition-colors ${appIsDark ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/5'}`}>
+            <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Footprints size={12} className={t.text} /> {text.moves}</span>
+            <span className="font-mono text-sm font-black">{moves}</span>
           </div>
-          <div className={`flex justify-between items-center px-3 py-2 rounded-lg ${appIsDark ? 'bg-white/5' : 'bg-black/5'}`}>
+          <div className={`flex justify-between items-center px-4 py-2.5 rounded-xl border transition-colors ${appIsDark ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/5'}`}>
             <span className="text-xs font-bold opacity-70 flex items-center gap-2">{text.level}</span>
-            <span className="font-mono text-sm font-bold uppercase drop-shadow-sm" style={{ color: t.playerColor }}>
+            <span className="font-mono text-sm font-black uppercase tracking-wider drop-shadow-sm" style={{ color: t.playerColor }}>
               {text[difficulty.toLowerCase() as 'kids' | 'easy' | 'medium' | 'hard']}
             </span>
           </div>

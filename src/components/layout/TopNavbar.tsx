@@ -38,32 +38,34 @@ export const TopNavbar = React.memo(function TopNavbar({
           </span>
         </div>
 
-        {/* Center: Main App Router Tabs */}
         <div className={`hidden md:flex items-center p-1 rounded-xl mx-4 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
           <button
             onClick={() => setActivePage('Classic')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Classic'
-              ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none hover:scale-105 active:scale-95 ${activePage === 'Classic'
+              ? `shadow-md ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
+            aria-label={text.classicMode}
           >
             <Swords size={16} className={activePage === 'Classic' ? t.text : ''} /> {text.classicMode?.replace('模式', '') || 'Classic'}
           </button>
           <button
             onClick={() => setActivePage('Challenge')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Challenge'
-              ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-pink-500 outline-none hover:scale-105 active:scale-95 ${activePage === 'Challenge'
+              ? `shadow-md text-white bg-gradient-to-r ${t.gradient}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
+            aria-label={text.challenge}
           >
             <Trophy size={16} /> {text.challenge}
           </button>
           <button
             onClick={() => setActivePage('Leaderboard')}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-opacity ${activePage === 'Leaderboard'
-              ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none hover:scale-105 active:scale-95 ${activePage === 'Leaderboard'
+              ? `shadow-md ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
               }`}
+            aria-label={text.leaderboard}
           >
             <BarChart3 size={16} /> {text.leaderboard}
           </button>
@@ -100,18 +102,29 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
         </div>
 
-        {/* Right: Controls */}
         <div className="flex items-center gap-2">
-          <button onClick={toggleDarkLight} className={`p-2 rounded-xl transition-transform hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-yellow-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
+          <button 
+            onClick={toggleDarkLight} 
+            className={`p-2 rounded-xl transition-all hover:scale-110 active:scale-90 focus-visible:ring-2 focus-visible:ring-yellow-400 outline-none ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-yellow-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}
+            aria-label={appIsDark ? "Switch to light mode" : "Switch to dark mode"}
+          >
             {appIsDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className={`p-2 rounded-xl transition-transform hover:scale-110 ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}>
+          <button 
+            onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} 
+            className={`p-2 rounded-xl transition-all hover:scale-110 active:scale-90 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-300' : 'bg-black/5 hover:bg-black/10 text-slate-600'}`}
+            aria-label="Toggle language"
+          >
             <Globe size={18} />
           </button>
           {/* User profile / Login */}
           <div
             onClick={() => setShowLogin(true)}
-            className={`px-3 h-9 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-opacity ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
+            className={`px-3 h-9 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-all hover:scale-[1.02] active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
+            tabIndex={0}
+            role="button"
+            aria-label="Player Profile"
+            onKeyDown={(e) => e.key === 'Enter' && setShowLogin(true)}
           >
             <User size={16} />
             <span className="hidden md:inline-block max-w-[80px] truncate">{playerName || (lang === 'zh' ? '游客' : 'Guest')}</span>
