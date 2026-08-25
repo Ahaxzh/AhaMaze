@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Trophy, Medal, Clock, Footprints, Award } from 'lucide-react';
 import { Language, GameMode, Difficulty, LeaderboardEntry } from '../../types/game';
 

@@ -123,7 +123,7 @@ export function getMazeStartEnd(grid: Cell[][], width: number, height: number, s
   };
 }
 
-// --- Phase 1: Recursive Backtracker (DFS) ---
+// --- Phase 1: Recursive Backtracker (DFS - strictly iterative with explicit stack) ---
 function carvePassages(grid: Cell[][], width: number, height: number, start: { x: number; y: number }) {
   const stack: Cell[] = [];
   const startCell = grid[start.y][start.x];
@@ -144,7 +144,7 @@ function carvePassages(grid: Cell[][], width: number, height: number, start: { x
     }
   }
 
-  // Carve any disconnected regions (can happen with shaped mazes)
+  // Carve any disconnected regions (can happen with shaped masks) iteratively
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const cell = grid[y][x];
@@ -154,7 +154,20 @@ function carvePassages(grid: Cell[][], width: number, height: number, start: { x
           const neighbor = visited[Math.floor(Math.random() * visited.length)];
           removeWalls(cell, neighbor);
           cell.visited = true;
-          carvePassages(grid, width, height, { x, y });
+          stack.push(cell);
+
+          while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            const unvisited = getUnvisitedNeighbors(current, grid, width, height);
+            if (unvisited.length > 0) {
+              const next = unvisited[Math.floor(Math.random() * unvisited.length)];
+              removeWalls(current, next);
+              next.visited = true;
+              stack.push(next);
+            } else {
+              stack.pop();
+            }
+          }
         }
       }
     }
@@ -177,17 +190,21 @@ function addStrategicLoops(
   const solution = solveMaze(grid, start, end);
   if (solution.length === 0) return;
 
-  // Build a set of cells on or adjacent to the solution path
-  const pathSet = new Set<string>();
-  const nearPathSet = new Set<string>();
-  for (const p of solution) {
-    pathSet.add(`${p.x},${p.y}`);
-    // Mark neighbors as "near path"
-    for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0], [1, -1], [1, 1], [-1, 1], [-1, -1]]) {
-      const nx = p.x + dx;
-      const ny = p.y + dy;
-      if (nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx].disabled) {
-        nearPathSet.add(`${nx},${ny}`);
+  // Build flat lookup table for cells on or adjacent to the solution path
+  const totalCells = width * height;
+  const isNearOrOnPath = new Uint8Array(totalCells);
+
+  for (let i = 0; i < solution.length; i++) {
+    const p = solution[i];
+    isNearOrOnPath[p.y * width + p.x] = 1;
+    // Mark 8-way neighbors as near path
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = p.x + dx;
+        const ny = p.y + dy;
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height && !grid[ny][nx].disabled) {
+          isNearOrOnPath[ny * width + nx] = 1;
+        }
       }
     }
   }
@@ -201,13 +218,12 @@ function addStrategicLoops(
       const cell = grid[y][x];
       if (cell.disabled) continue;
 
-      const key = `${x},${y}`;
-      const isNear = nearPathSet.has(key) || pathSet.has(key);
+      const isNear = isNearOrOnPath[y * width + x] === 1;
 
       // Right wall
       if (x < width - 1 && !grid[y][x + 1].disabled && cell.walls.right) {
         const entry = { cell, neighbor: grid[y][x + 1] };
-        if (isNear || nearPathSet.has(`${x + 1},${y}`)) {
+        if (isNear || isNearOrOnPath[y * width + (x + 1)] === 1) {
           nearPathWalls.push(entry);
         } else {
           farWalls.push(entry);
@@ -216,7 +232,7 @@ function addStrategicLoops(
       // Bottom wall
       if (y < height - 1 && !grid[y + 1][x].disabled && cell.walls.bottom) {
         const entry = { cell, neighbor: grid[y + 1][x] };
-        if (isNear || nearPathSet.has(`${x},${y + 1}`)) {
+        if (isNear || isNearOrOnPath[(y + 1) * width + x] === 1) {
           nearPathWalls.push(entry);
         } else {
           farWalls.push(entry);
@@ -287,40 +303,78 @@ function wouldCreate2x2Open(grid: Cell[][], a: Cell, b: Cell, width: number, hei
   return false;
 }
 
-// --- BFS Solver ---
+// --- High-Performance BFS Solver (O(N) time & memory with parent pointers) ---
 export const solveMaze = (
   grid: Cell[][],
   start: { x: number; y: number },
   end: { x: number; y: number },
 ): { x: number; y: number }[] => {
   const rows = grid.length;
+  if (rows === 0) return [];
   const cols = grid[0]?.length ?? 0;
-  const queue: { x: number; y: number; path: { x: number; y: number }[] }[] = [];
-  const visited = new Set<string>();
+  if (cols === 0) return [];
 
-  queue.push({ ...start, path: [start] });
-  visited.add(`${start.x},${start.y}`);
+  const totalCells = rows * cols;
+  const parent = new Int32Array(totalCells).fill(-1);
+  const queue = new Int32Array(totalCells);
+  let head = 0;
+  let tail = 0;
 
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    const { x, y, path } = current;
+  const startIndex = start.y * cols + start.x;
+  const endIndex = end.y * cols + end.x;
 
-    if (x === end.x && y === end.y) return path;
+  queue[tail++] = startIndex;
+  parent[startIndex] = startIndex; // marked visited
 
-    const cell = grid[y][x];
-    const neighbors: { x: number; y: number }[] = [];
+  while (head < tail) {
+    const curr = queue[head++];
+    if (curr === endIndex) {
+      // Reconstruct path
+      const path: { x: number; y: number }[] = [];
+      let c = endIndex;
+      while (c !== startIndex) {
+        path.push({ x: c % cols, y: Math.floor(c / cols) });
+        c = parent[c];
+      }
+      path.push({ x: start.x, y: start.y });
+      path.reverse();
+      return path;
+    }
 
-    if (!cell.walls.top && y > 0) neighbors.push({ x, y: y - 1 });
-    if (!cell.walls.right && x < cols - 1) neighbors.push({ x: x + 1, y });
-    if (!cell.walls.bottom && y < rows - 1) neighbors.push({ x, y: y + 1 });
-    if (!cell.walls.left && x > 0) neighbors.push({ x: x - 1, y });
+    const cx = curr % cols;
+    const cy = Math.floor(curr / cols);
+    const cell = grid[cy][cx];
 
-    for (const neighbor of neighbors) {
-      if (grid[neighbor.y][neighbor.x].disabled) continue;
-      const key = `${neighbor.x},${neighbor.y}`;
-      if (!visited.has(key)) {
-        visited.add(key);
-        queue.push({ ...neighbor, path: [...path, neighbor] });
+    // Top
+    if (!cell.walls.top && cy > 0) {
+      const nIdx = (cy - 1) * cols + cx;
+      if (parent[nIdx] === -1 && !grid[cy - 1][cx].disabled) {
+        parent[nIdx] = curr;
+        queue[tail++] = nIdx;
+      }
+    }
+    // Right
+    if (!cell.walls.right && cx < cols - 1) {
+      const nIdx = cy * cols + (cx + 1);
+      if (parent[nIdx] === -1 && !grid[cy][cx + 1].disabled) {
+        parent[nIdx] = curr;
+        queue[tail++] = nIdx;
+      }
+    }
+    // Bottom
+    if (!cell.walls.bottom && cy < rows - 1) {
+      const nIdx = (cy + 1) * cols + cx;
+      if (parent[nIdx] === -1 && !grid[cy + 1][cx].disabled) {
+        parent[nIdx] = curr;
+        queue[tail++] = nIdx;
+      }
+    }
+    // Left
+    if (!cell.walls.left && cx > 0) {
+      const nIdx = cy * cols + (cx - 1);
+      if (parent[nIdx] === -1 && !grid[cy][cx - 1].disabled) {
+        parent[nIdx] = curr;
+        queue[tail++] = nIdx;
       }
     }
   }

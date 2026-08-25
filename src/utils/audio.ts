@@ -1,13 +1,18 @@
-// Simple synth for game sound effects
-const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+// Simple high-performance web audio synth for game sound effects
+const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || (window as any).webkitAudioContext) : null;
 let audioCtx: AudioContext | null = null;
 
-const initAudio = () => {
+const initAudio = (): AudioContext | null => {
+  if (!AudioContextClass) return null;
   if (!audioCtx) {
-    audioCtx = new AudioContextClass();
+    try {
+      audioCtx = new AudioContextClass();
+    } catch {
+      return null;
+    }
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    audioCtx.resume().catch(() => {});
   }
   return audioCtx;
 };
@@ -15,63 +20,72 @@ const initAudio = () => {
 export const playMoveSound = (enabled: boolean) => {
   if (!enabled) return;
   const ctx = initAudio();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(300, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
+  osc.frequency.setValueAtTime(300, now);
+  osc.frequency.exponentialRampToValueAtTime(50, now + 0.08);
 
-  gain.gain.setValueAtTime(0.1, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.08, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
-  osc.start();
-  osc.stop(ctx.currentTime + 0.1);
+  osc.start(now);
+  osc.stop(now + 0.08);
 };
 
 export const playWinSound = (enabled: boolean) => {
   if (!enabled) return;
   const ctx = initAudio();
-  
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
   // Arpeggio
   const notes = [523.25, 659.25, 783.99, 1046.50]; // C Major
   notes.forEach((freq, i) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    
+    const noteStart = now + i * 0.08;
+
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.1);
-    
-    gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.3);
-    
+    osc.frequency.setValueAtTime(freq, noteStart);
+
+    gain.gain.setValueAtTime(0.1, noteStart);
+    gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.25);
+
     osc.connect(gain);
     gain.connect(ctx.destination);
-    
-    osc.start(ctx.currentTime + i * 0.1);
-    osc.stop(ctx.currentTime + i * 0.1 + 0.3);
+
+    osc.start(noteStart);
+    osc.stop(noteStart + 0.25);
   });
 };
 
 export const playBumpSound = (enabled: boolean) => {
   if (!enabled) return;
   const ctx = initAudio();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
   osc.type = 'square';
-  osc.frequency.setValueAtTime(150, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+  osc.frequency.setValueAtTime(150, now);
+  osc.frequency.exponentialRampToValueAtTime(100, now + 0.06);
 
-  gain.gain.setValueAtTime(0.05, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.04, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
 
-  osc.start();
-  osc.stop(ctx.currentTime + 0.1);
+  osc.start(now);
+  osc.stop(now + 0.06);
 };

@@ -16,4 +16,112 @@ body {
   color: #e2e8f0; /* Slate 200 */
   margin: 0;
   overflow: hidden; /* Prevent scroll on mobile during swipe */
+  touch-action: none; /* Prevent pinch zoom & pull-to-refresh heating issues on mobile */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Kids Mode Falling Emojis Animation --- */
+@keyframes kids-float {
+  0% {
+    transform: translate3d(0, -100px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--float-opacity, 0.55);
+  }
+  85% {
+    opacity: var(--float-opacity, 0.55);
+  }
+  100% {
+    transform: translate3d(var(--float-drift, 0px), 108vh, 0) rotate(var(--float-rotate, 180deg));
+    opacity: 0;
+  }
+}
+
+.animate-kids-float {
+  animation-name: kids-float;
+  animation-duration: var(--float-duration, 20s);
+  animation-delay: var(--float-delay, 0s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+/* --- Kid Player Avatar & End Marker Animations --- */
+@keyframes kid-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-15%) scale(1.08);
+  }
+}
+
+.animate-kid-bounce {
+  animation: kid-bounce 0.8s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes kid-end-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.animate-kid-end-pulse {
+  animation: kid-end-pulse 1.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* --- Destination Beacon & Goal Animations --- */
+@keyframes beacon-wave {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+.animate-beacon-wave {
+  animation: beacon-wave 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8%) scale(1.06);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 1.8s ease-in-out infinite;
+  will-change: transform;
 }

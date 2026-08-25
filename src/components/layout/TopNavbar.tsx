@@ -74,7 +74,10 @@ export const TopNavbar = React.memo(function TopNavbar({
         {/* Center Mobile: Simple Header Router */}
         <div className={`md:hidden flex items-center p-1 rounded-xl mx-2 ${appIsDark ? 'bg-black/40' : 'bg-black/5'}`}>
            <button
-            onClick={() => setActivePage('Classic')}
+            onClick={() => {
+              setActivePage('Classic');
+              setShowMobileSidebar(false);
+            }}
             className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Classic'
               ? `shadow-sm ${appIsDark ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
@@ -83,7 +86,10 @@ export const TopNavbar = React.memo(function TopNavbar({
             <Swords size={14} className={activePage === 'Classic' ? t.text : ''} />
           </button>
           <button
-            onClick={() => setActivePage('Challenge')}
+            onClick={() => {
+              setActivePage('Challenge');
+              setShowMobileSidebar(false);
+            }}
             className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Challenge'
               ? `shadow-sm text-white bg-gradient-to-r ${t.gradient}`
               : `opacity-60 hover:opacity-100 ${t.text}`
@@ -92,7 +98,10 @@ export const TopNavbar = React.memo(function TopNavbar({
             <Trophy size={14} />
           </button>
           <button
-            onClick={() => setActivePage('Leaderboard')}
+            onClick={() => {
+              setActivePage('Leaderboard');
+              setShowMobileSidebar(false);
+            }}
             className={`flex items-center px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity ${activePage === 'Leaderboard'
               ? `shadow-sm ${appIsDark ? 'bg-amber-900/40 text-amber-500 border border-amber-500/30' : 'bg-amber-100 text-amber-600'}`
               : `opacity-60 hover:opacity-100 ${t.text}`
@@ -119,12 +128,20 @@ export const TopNavbar = React.memo(function TopNavbar({
           </button>
           {/* User profile / Login */}
           <div
-            onClick={() => setShowLogin(true)}
+            onClick={() => {
+              setShowLogin(true);
+              setShowMobileSidebar(false);
+            }}
             className={`px-3 h-9 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-sm cursor-pointer hover:opacity-80 transition-all hover:scale-[1.02] active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none ${appIsDark ? 'bg-gradient-to-br from-slate-700 to-slate-800 text-slate-300' : 'bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600'}`}
             tabIndex={0}
             role="button"
             aria-label="Player Profile"
-            onKeyDown={(e) => e.key === 'Enter' && setShowLogin(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setShowLogin(true);
+                setShowMobileSidebar(false);
+              }
+            }}
           >
             <User size={16} />
             <span className="hidden md:inline-block max-w-[80px] truncate">{playerName || (lang === 'zh' ? '游客' : 'Guest')}</span>

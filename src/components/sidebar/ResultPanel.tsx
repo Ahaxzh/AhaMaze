@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Trophy, Flag, Clock } from 'lucide-react';
-import { Theme } from '../../types/game';
+import { Theme, Language } from '../../types/game';
 import { THEME_CONFIGS } from '../../constants/game';
 
 interface ResultPanelProps {
@@ -15,10 +15,11 @@ interface ResultPanelProps {
   moves: number;
   efficiency: number;
   rating: string;
+  lang?: Language;
 }
 
 export const ResultPanel = React.memo(function ResultPanel({
-  isFinished, appIsDark, gameState, theme, text, finalTime, optLen, moves, efficiency, rating
+  isFinished, appIsDark, gameState, theme, text, finalTime, optLen, moves, efficiency, rating, lang = 'zh'
 }: ResultPanelProps) {
   const t = THEME_CONFIGS[theme];
 
@@ -87,30 +88,34 @@ export const ResultPanel = React.memo(function ResultPanel({
         </>
       ) : (
         <>
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl text-red-500 bg-red-500/15 shadow-inner">
-              <Flag className="w-10 h-10" />
+          <div className="flex items-center gap-3.5">
+            <div className="p-3 rounded-2xl text-amber-500 bg-amber-500/15 shadow-inner shrink-0">
+              <Flag className="w-8 h-8" />
             </div>
             <div>
-              <div className="text-2xl font-black tracking-tight text-red-500">{text.gaveUp}</div>
-              <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Better luck next time</div>
+              <div className="text-xl font-black tracking-tight text-amber-500">
+                {lang === 'zh' ? '正解路径已标出' : text.gaveUp}
+              </div>
+              <div className="text-xs font-semibold opacity-60 mt-0.5">
+                {lang === 'zh' ? '已在迷宫中高亮标出最优通关路线' : 'Optimal route highlighted on maze'}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 mt-2">
+          <div className="grid grid-cols-1 gap-2 mt-1">
             <div className={`flex justify-between items-center p-3 rounded-xl border ${appIsDark ? 'bg-white/5 border-white/5' : 'bg-black/5 border-black/5'}`}>
-              <span className="text-sm font-bold opacity-70 flex items-center gap-2"><Clock size={14} /> {text.timer}</span>
-              <span className="font-mono text-lg font-black tracking-tighter">{formatTime(finalTime)}</span>
+              <span className="text-xs font-bold opacity-70 flex items-center gap-2"><Clock size={13} /> {text.timer}</span>
+              <span className="font-mono text-base font-black tracking-tight">{formatTime(finalTime)}</span>
             </div>
             
-            <div className="flex flex-col gap-2 p-3 rounded-xl border border-dashed border-red-500/20">
-              <div className="flex justify-between items-center text-xs font-bold opacity-60">
+            <div className={`flex flex-col gap-2 p-3 rounded-xl border border-dashed ${appIsDark ? 'border-amber-500/30 bg-amber-500/5' : 'border-amber-400/40 bg-amber-50/50'}`}>
+              <div className="flex justify-between items-center text-xs font-bold opacity-80">
                 <span>{text.solutionSteps}</span>
-                <span className="font-mono text-emerald-500">{optLen}</span>
+                <span className="font-mono text-amber-500 font-black">{optLen}</span>
               </div>
-              <div className="flex justify-between items-center text-xs font-bold opacity-60">
+              <div className="flex justify-between items-center text-xs font-bold opacity-80">
                 <span>{text.moves}</span>
-                <span className="font-mono">{moves}</span>
+                <span className="font-mono font-black">{moves}</span>
               </div>
             </div>
           </div>

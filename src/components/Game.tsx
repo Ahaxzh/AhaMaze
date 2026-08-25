@@ -1,20 +1,27 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import confetti from 'canvas-confetti';
-import { generateMaze, solveMaze, Cell } from '../utils/maze';
-import { playMoveSound, playWinSound, playBumpSound } from '../utils/audio';
 import {
-  RefreshCw, Trophy, Play, ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-  Download, RotateCcw, HelpCircle, Flag, Volume2, VolumeX,
-  Sun, Moon, Globe, Home, Swords, BarChart3, User, Clock, Footprints,
-  ChevronRight as ChevronRightIcon,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  X,
+  Sparkles,
 } from 'lucide-react';
 
 import {
-  Difficulty, Theme, Language, GameMode, ActivePage, LeaderboardEntry, Position
+  Difficulty,
+  Theme,
+  Language,
+  GameMode,
+  ActivePage,
+  LeaderboardEntry,
 } from '../types/game';
 import {
-  MAZE_SIZES, MAZE_DIFFICULTY_PARAMS, THEME_CONFIGS, TEXTS, KIDS_EMOJIS
+  MAZE_SIZES,
+  THEME_CONFIGS,
+  TEXTS,
 } from '../constants/game';
 import { KidsBackground } from './backgrounds/KidsBackground';
 import { TopNavbar } from './layout/TopNavbar';
@@ -23,22 +30,36 @@ import { InfoPanel } from './sidebar/InfoPanel';
 import { ControlPanel } from './sidebar/ControlPanel';
 import { ResultPanel } from './sidebar/ResultPanel';
 import { LoginModal } from './modals/LoginModal';
+import {
+  MazeCanvas,
+  Player,
+  EndMarkerPulse,
+} from './game/MazeCanvas';
 
-
-
-
-import { MazeCanvas, Player, EndMarkerPulse, downloadMazeImage } from './game/MazeCanvas';
-
-
-
-
+import { usePlayerProfile } from '../hooks/usePlayerProfile';
+import { useMazeGame } from '../hooks/useMazeGame';
+import { useGamepad } from '../hooks/useGamepad';
+import { useKeyboard } from '../hooks/useKeyboard';
+import { useTouchSwipe } from '../hooks/useTouchSwipe';
 
 // --- Mobile D-pad control button ---
-const ControlButton = React.memo(function ControlButton({ icon, onClick }: { icon: React.ReactNode; onClick: () => void }) {
+const ControlButton = React.memo(function ControlButton({
+  icon,
+  onClick,
+  ariaLabel,
+}: {
+  icon: React.ReactNode;
+  onClick: () => void;
+  ariaLabel: string;
+}) {
   return (
     <button
-      className="w-14 h-14 rounded-full bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-300 active:bg-cyan-500 active:text-slate-900 active:border-cyan-400 transition-colors backdrop-blur-sm"
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="w-14 h-14 rounded-full bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-300 active:bg-cyan-500 active:text-slate-900 active:border-cyan-400 transition-colors backdrop-blur-sm shadow-md"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      aria-label={ariaLabel}
     >
       {icon}
     </button>
@@ -48,81 +69,102 @@ const ControlButton = React.memo(function ControlButton({ icon, onClick }: { ico
 // =====================
 // --- Main Game ---
 // =====================
-
-
 export default function Game() {
-  const [difficulty, setDifficulty] = useState<Difficulty>('Easy');
-  const [theme, setTheme] = useState<Theme>('Light');
+  const [difficulty, setDifficulty] = useState<Difficulty>('Kids');
+  const [theme, setTheme] = useState<Theme>('Princess');
   const [lang, setLang] = useState<Language>('zh');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [gameMode, setGameMode] = useState<GameMode>('Classic');
   const [activePage, setActivePage] = useState<ActivePage>('Classic');
-  const [fogCountdown, setFogCountdown] = useState(10);
-
-  // Local Player Identity & Leaderboard
-  const [playerName, setPlayerName] = useState<string>('');
-  const [playerEmoji, setPlayerEmoji] = useState<string>(() => localStorage.getItem('ahamaze_avatar') || '💖');
-  const [showLogin, setShowLogin] = useState(false);
-  const [leaderboardMode, setLeaderboardMode] = useState<GameMode>('Classic');
-  const [leaderboardDiff, setLeaderboardDiff] = useState<Difficulty>('Easy');
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
-
-  const [maze, setMaze] = useState<Cell[][]>([]);
-  const [playerPos, setPlayerPos] = useState<Position>({ x: 0, y: 0 });
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'won' | 'gaveUp'>('start');
-  const [level, setLevel] = useState(1);
-  const [moves, setMoves] = useState(0);
-  const [visitedPath, setVisitedPath] = useState<Position[]>([]);
-  const [optimalPath, setOptimalPath] = useState<Position[]>([]);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [finalTime, setFinalTime] = useState(0);
-
-  const [replayIndex, setReplayIndex] = useState(-1);
-  const [isReplaying, setIsReplaying] = useState(false);
-  const replayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Mobile sidebar toggle
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
+  // Leaderboard filters & data
+  const [leaderboardMode, setLeaderboardMode] = useState<GameMode>('Classic');
+  const [leaderboardDiff, setLeaderboardDiff] = useState<Difficulty>('Kids');
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+
+  // Profile hook
+  const {
+    playerName,
+    setPlayerName,
+    playerEmoji,
+    setPlayerEmoji,
+    showLogin,
+    setShowLogin,
+  } = usePlayerProfile();
+
+  // Core Game hook
+  const {
+    maze,
+    playerPos,
+    gameState,
+    level,
+    moves,
+    visitedPath,
+    optimalPath,
+    startTime,
+    finalTime,
+    fogCountdown,
+    replayIndex,
+    isReplaying,
+    isFinished,
+    optLen,
+    efficiency,
+    rating,
+    mazeWidth: MAZE_WIDTH,
+    mazeHeight: MAZE_HEIGHT,
+    startNewLevel,
+    restartLevel,
+    handleGiveUp,
+    handleMove,
+    moveUp,
+    moveDown,
+    moveLeft,
+    moveRight,
+    startReplay,
+    stopReplay,
+  } = useMazeGame({
+    difficulty,
+    gameMode,
+    theme,
+    soundEnabled,
+    playerName,
+    onGameEnd: () => setShowMobileSidebar(true),
+  });
+
+  // Controls hooks (event-driven, 0 CPU polling when idle/no gamepad)
+  const closeMobileSidebar = useCallback(() => setShowMobileSidebar(false), []);
+
+  const onPlayerMove = useCallback(
+    (dx: number, dy: number) => {
+      setShowMobileSidebar(false);
+      handleMove(dx, dy);
+    },
+    [handleMove]
+  );
+
+  const controlsEnabled = gameState === 'playing' && !showLogin;
+  useGamepad({
+    enabled: controlsEnabled,
+    onMove: onPlayerMove,
+    onRestart: startNewLevel,
+  });
+  useKeyboard({
+    enabled: controlsEnabled,
+    onMove: onPlayerMove,
+    onRestart: startNewLevel,
+  });
+  const { onTouchStart, onTouchEnd } = useTouchSwipe({
+    enabled: controlsEnabled,
+    onMove: onPlayerMove,
+  });
+
+  // Responsive maze container sizing
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
-  const playerPosRef = useRef(playerPos); playerPosRef.current = playerPos;
-  const gameStateRef = useRef(gameState); gameStateRef.current = gameState;
-  const mazeRef = useRef(maze); mazeRef.current = maze;
-  const soundEnabledRef = useRef(soundEnabled); soundEnabledRef.current = soundEnabled;
-  const startTimeRef = useRef(startTime); startTimeRef.current = startTime;
-  const movesRef = useRef(moves); movesRef.current = moves; // Added movesRef
-
-  const { width: MAZE_WIDTH, height: MAZE_HEIGHT } = MAZE_SIZES[difficulty];
-  const mazeWidthRef = useRef(MAZE_WIDTH); mazeWidthRef.current = MAZE_WIDTH;
-  const mazeHeightRef = useRef(MAZE_HEIGHT); mazeHeightRef.current = MAZE_HEIGHT;
-
-  const text = TEXTS[lang];
-  const t = THEME_CONFIGS[theme];
-  // Determine if the current App-level requested aesthetics is dark based on the active theme
-  const appIsDark = useMemo(() => {
-    return t.ambience === 'dark';
-  }, [t.ambience]);
-
-  // Background pattern: use SVG dots instead of overlapping circles
-  const textureBg = useMemo(() => {
-    const color = appIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
-    return `radial-gradient(${color} 2px, transparent 2px)`;
-  }, [appIsDark]);
-
-  // Handle local storage player load on boot
-  useEffect(() => {
-    const savedName = localStorage.getItem('ahamaze_player');
-    if (savedName) {
-      setPlayerName(savedName);
-    } else {
-      setShowLogin(true); // Prompt on very first visit
-    }
-  }, []);
-
-  // Track container size for stable sizing
   useEffect(() => {
     if (!containerRef.current) return;
     const updateContainerSize = () => {
@@ -153,19 +195,28 @@ export default function Game() {
     return Math.max(size, 6);
   }, [containerSize, MAZE_WIDTH, MAZE_HEIGHT]);
 
+  const text = TEXTS[lang];
+  const t = THEME_CONFIGS[theme];
+  const appIsDark = useMemo(() => t.ambience === 'dark', [t.ambience]);
+
+  // Background pattern: use SVG dots
+  const textureBg = useMemo(() => {
+    const color = appIsDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)';
+    return `radial-gradient(${color} 2px, transparent 2px)`;
+  }, [appIsDark]);
+
   // Force theme application for Kids mode
   useEffect(() => {
     if (activePage !== 'Classic' && activePage !== 'Challenge') return;
     if (difficulty === 'Kids') {
       setTheme(appIsDark ? 'Starry' : 'Princess');
     } else if (theme === 'Princess' || theme === 'Starry') {
-      // Revert if diff changed from Kids to something else
       setTheme(appIsDark ? 'Neon' : 'Light');
     }
   }, [difficulty, appIsDark, activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync dark class on documentElement
   useEffect(() => {
-    // Update body theme class to sync global dark mode toggles if needed
     if (appIsDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -173,269 +224,38 @@ export default function Game() {
     }
   }, [appIsDark]);
 
-  useEffect(() => { 
+  // Handle page switches
+  useEffect(() => {
     if (activePage === 'Classic' || activePage === 'Challenge') {
       setGameMode(activePage);
-      startNewLevel(); 
     } else if (activePage === 'Leaderboard') {
-      // Reload leaderboard data
       try {
         setLeaderboardData(JSON.parse(localStorage.getItem('ahamaze_records') || '[]'));
-      } catch (e) { setLeaderboardData([]); }
+      } catch {
+        setLeaderboardData([]);
+      }
       stopReplay();
     }
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */ 
-  }, [difficulty, activePage]);
+  }, [activePage, stopReplay]);
 
-  // Fog countdown timer
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (gameState === 'playing' && gameMode === 'Challenge' && fogCountdown > 0) {
-      timer = setInterval(() => setFogCountdown(c => c - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [gameState, gameMode, fogCountdown]);
-
-  const stopReplay = useCallback(() => {
-    if (replayTimerRef.current) { clearInterval(replayTimerRef.current); replayTimerRef.current = null; }
-    setIsReplaying(false); setReplayIndex(-1);
-  }, []);
-
-  const startNewLevel = useCallback(() => {
-    stopReplay();
-    const w = mazeWidthRef.current; const h = mazeHeightRef.current;
-    setMaze(generateMaze(w, h));
-    setPlayerPos({ x: 0, y: 0 }); setVisitedPath([{ x: 0, y: 0 }]); setOptimalPath([]);
-    setGameState('playing'); setMoves(0); setStartTime(null); setFinalTime(0);
-    setFogCountdown(10); // Reset fog timer
-    setShowMobileSidebar(false);
-  }, [stopReplay]);
-
-  const handleWin = useCallback((currentMaze: Cell[][]) => {
-    setGameState('won');
-    const fTime = startTimeRef.current ? Date.now() - startTimeRef.current : 0;
-    setFinalTime(fTime);
-    playWinSound(soundEnabledRef.current);
-    const duration = 3000; const end = Date.now() + duration;
-    const colors = [t.playerColor, t.endColor];
-    const frame = () => {
-      confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0 }, colors });
-      confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1 }, colors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
-    const w = mazeWidthRef.current; const h = mazeHeightRef.current;
-
-    // Save Leaderboard record
-    const optPath = solveMaze(currentMaze, { x: 0, y: 0 }, { x: w - 1, y: h - 1 });
-    setOptimalPath(optPath);
-
-    setTimeout(() => {
-      try {
-        const mvs = playerPosRef.current.x === w - 1 && playerPosRef.current.y === h - 1 ? movesRef.current : movesRef.current + 1;
-        const records = JSON.parse(localStorage.getItem('ahamaze_records') || '[]');
-        records.push({
-          name: playerName || 'Guest',
-          difficulty: difficulty,
-          mode: gameMode,
-          time: fTime,
-          moves: mvs,
-          date: new Date().toISOString()
-        });
-        localStorage.setItem('ahamaze_records', JSON.stringify(records));
-      } catch (e) { }
-    }, 100);
-
-    setShowMobileSidebar(true);
-  }, [t, playerName, difficulty, gameMode]);
-
-  const handleMove = useCallback((dx: number, dy: number) => {
-    if (gameStateRef.current !== 'playing') return;
-    if (!startTimeRef.current) setStartTime(Date.now());
-    const pos = playerPosRef.current; const m = mazeRef.current;
-    const w = mazeWidthRef.current; const h = mazeHeightRef.current;
-    const currentCell = m[pos.y][pos.x];
-    const newX = pos.x + dx; const newY = pos.y + dy;
-    if (newX < 0 || newX >= w || newY < 0 || newY >= h) { playBumpSound(soundEnabledRef.current); return; }
-    if (dx === 1 && currentCell.walls.right) { playBumpSound(soundEnabledRef.current); return; }
-    if (dx === -1 && currentCell.walls.left) { playBumpSound(soundEnabledRef.current); return; }
-    if (dy === 1 && currentCell.walls.bottom) { playBumpSound(soundEnabledRef.current); return; }
-    if (dy === -1 && currentCell.walls.top) { playBumpSound(soundEnabledRef.current); return; }
-    const newPos = { x: newX, y: newY };
-    setVisitedPath((prev) => [...prev, newPos]); setPlayerPos(newPos);
-    setMoves((m) => {
-      movesRef.current = m + 1;
-      return m + 1;
-    });
-    playMoveSound(soundEnabledRef.current);
-    if (newX === w - 1 && newY === h - 1) handleWin(m);
-  }, [handleWin]);
-
-  const restartLevel = useCallback(() => {
-    stopReplay();
-    setPlayerPos({ x: 0, y: 0 }); setVisitedPath([{ x: 0, y: 0 }]);
-    setGameState('playing'); setMoves(0); setStartTime(null); setFinalTime(0); setOptimalPath([]);
-    setShowMobileSidebar(false);
-  }, [stopReplay]);
-
-  const handleGiveUp = useCallback(() => {
-    if (gameStateRef.current !== 'playing') return;
-    stopReplay(); setGameState('gaveUp');
-    setFinalTime(startTimeRef.current ? Date.now() - startTimeRef.current : 0);
-    const m = mazeRef.current; const w = mazeWidthRef.current; const h = mazeHeightRef.current;
-    setOptimalPath(solveMaze(m, { x: 0, y: 0 }, { x: w - 1, y: h - 1 }));
-    setShowMobileSidebar(true);
-  }, [stopReplay]);
-
-  const startReplay = useCallback(() => {
-    if (visitedPath.length < 2) return;
-    stopReplay(); setIsReplaying(true); setReplayIndex(0);
-    const speed = Math.max(40, Math.min(150, 8000 / visitedPath.length));
-    let idx = 0;
-    replayTimerRef.current = setInterval(() => {
-      idx++;
-      if (idx >= visitedPath.length) {
-        if (replayTimerRef.current) clearInterval(replayTimerRef.current);
-        replayTimerRef.current = null; setIsReplaying(false); setReplayIndex(-1);
-        return;
-      }
-      setReplayIndex(idx);
-    }, speed);
-  }, [visitedPath, stopReplay]);
-
-  const handleDownload = useCallback(() => {
-    downloadMazeImage(maze, visitedPath, optimalPath, theme, MAZE_WIDTH, MAZE_HEIGHT, moves, finalTime, level, difficulty, lang);
-  }, [maze, visitedPath, optimalPath, theme, MAZE_WIDTH, MAZE_HEIGHT, moves, finalTime, level, difficulty, lang]);
-
-  // Keyboard
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (gameStateRef.current !== 'playing') return;
-      switch (e.key) {
-        case 'ArrowUp': case 'w': handleMove(0, -1); break;
-        case 'ArrowDown': case 's': handleMove(0, 1); break;
-        case 'ArrowLeft': case 'a': handleMove(-1, 0); break;
-        case 'ArrowRight': case 'd': handleMove(1, 0); break;
-        case 'r': case 'R': startNewLevel(); break;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleMove, startNewLevel]);
-
-  // Gamepad
-  useEffect(() => {
-    let reqId: number;
-    let lastMoveTime = 0;
-    const COOLDOWN = 140; // ms between consecutive stick moves
-    const THRESHOLD = 0.4; // analog stick threshold
-
-    const pollGamepad = () => {
-      reqId = requestAnimationFrame(pollGamepad);
-
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      const now = Date.now();
-      if (now - lastMoveTime < COOLDOWN) return;
-
-      for (const gp of gamepads) {
-        if (!gp) continue;
-
-        // Start button (Index 9) to generate new maze
-        if (gp.buttons[9]?.pressed) {
-          startNewLevel();
-          lastMoveTime = now + 500; // block inputs for half a second
-          break;
-        }
-
-        if (gameStateRef.current !== 'playing') continue;
-
-        let dx = 0, dy = 0;
-
-        // D-pad (Standard mapping: 12=Up, 13=Down, 14=Left, 15=Right)
-        if (gp.buttons[12]?.pressed) dy = -1;
-        else if (gp.buttons[13]?.pressed) dy = 1;
-        else if (gp.buttons[14]?.pressed) dx = -1;
-        else if (gp.buttons[15]?.pressed) dx = 1;
-
-        // Left Stick (Axes 0=X, 1=Y)
-        else if (gp.axes[1] && gp.axes[1] < -THRESHOLD) dy = -1;
-        else if (gp.axes[1] && gp.axes[1] > THRESHOLD) dy = 1;
-        else if (gp.axes[0] && gp.axes[0] < -THRESHOLD) dx = -1;
-        else if (gp.axes[0] && gp.axes[0] > THRESHOLD) dx = 1;
-
-        if (dx !== 0 || dy !== 0) {
-          handleMove(dx, dy);
-          lastMoveTime = now;
-          break; // Process only one directional input from the first active controller
-        }
-      }
-    };
-    reqId = requestAnimationFrame(pollGamepad);
-    return () => cancelAnimationFrame(reqId);
-  }, [handleMove, startNewLevel]);
-
-  // Touch
-  const handleTouchStart = useCallback((e: React.TouchEvent) => { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, []);
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!touchStart.current) return;
-    const te = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-    const dx = te.x - touchStart.current.x; const dy = te.y - touchStart.current.y;
-    if (Math.abs(dx) > Math.abs(dy)) { if (Math.abs(dx) > 30) handleMove(dx > 0 ? 1 : -1, 0); }
-    else { if (Math.abs(dy) > 30) handleMove(0, dy > 0 ? 1 : -1); }
-    touchStart.current = null;
-  }, [handleMove]);
-
-  const moveUp = useCallback(() => handleMove(0, -1), [handleMove]);
-  const moveDown = useCallback(() => handleMove(0, 1), [handleMove]);
-  const moveLeft = useCallback(() => handleMove(-1, 0), [handleMove]);
-  const moveRight = useCallback(() => handleMove(1, 0), [handleMove]);
-
-  const formatTime = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`; };
-  const optLen = optimalPath.length > 0 ? optimalPath.length - 1 : 0;
-  const efficiency = optLen > 0 ? Math.round((optLen / moves) * 100) : 0;
-  const isFinished = gameState === 'won' || gameState === 'gaveUp';
-  const rating = efficiency >= 95 ? 'Perfect' : efficiency >= 85 ? 'Excellent' : efficiency >= 70 ? 'Good' : efficiency >= 50 ? 'Fair' : 'Lost in Maze';
-
-  // Toggle between dark/light base on current theme
-  const toggleDarkLight = () => {
+  // Toggle dark/light mode
+  const toggleDarkLight = useCallback(() => {
     if (difficulty === 'Kids') {
-      // Allow Kids mode to toggle between its two themes: Princess (Light) and Starry (Dark)
-      setTheme(theme === 'Princess' ? 'Starry' : 'Princess');
-      return; 
+      setTheme((prev) => (prev === 'Princess' ? 'Starry' : 'Princess'));
+      return;
     }
     if (appIsDark) {
-      setTheme(theme === 'Retro' ? 'Retro' : (theme === 'Neon' ? 'Light' : 'Amber'));
+      setTheme((prev) => (prev === 'Retro' ? 'Retro' : prev === 'Neon' ? 'Light' : 'Amber'));
     } else {
-      setTheme(theme === 'Light' ? 'Neon' : 'Sunset');
+      setTheme((prev) => (prev === 'Light' ? 'Neon' : 'Sunset'));
     }
-  };
+  }, [difficulty, appIsDark]);
 
-  // --- Sidebar Action Button ---
-  const SidebarBtn = ({ icon, label, onClick, primary, disabled: dis }: { icon: React.ReactNode; label: string; onClick: () => void; primary?: boolean; disabled?: boolean }) => (
-    <button
-      onClick={onClick}
-      disabled={dis}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${primary
-        ? 'text-white shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95'
-        : dis
-          ? 'opacity-40 cursor-not-allowed'
-          : appIsDark ? 'bg-white/5 hover:bg-white/10 text-slate-200' : 'bg-black/5 hover:bg-black/10 text-slate-700'
-        }`}
-      style={primary ? { background: `linear-gradient(135deg, ${t.playerColor}, ${t.trailColor})` } : undefined}
-    >
-      <div className={primary ? 'opacity-90' : 'opacity-70'}>{icon}</div>
-      <span className="tracking-wide">{label}</span>
-    </button>
-  );
-
-  // =========================================
-  // RENDER
-  // =========================================
   return (
     <div
       className={`fixed inset-0 flex flex-col font-sans overflow-hidden select-none ${t.bg} ${t.text}`}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       {/* Background texture */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -445,6 +265,7 @@ export default function Game() {
           <div className="absolute inset-0" style={{ backgroundImage: textureBg }} />
         )}
       </div>
+
       {/* ========== TOP NAVBAR ========== */}
       <TopNavbar
         appIsDark={appIsDark}
@@ -464,145 +285,256 @@ export default function Game() {
       {/* ========== MAIN CONTENT (maze + sidebar) ========== */}
       {(activePage === 'Classic' || activePage === 'Challenge') && (
         <div className="flex-1 flex overflow-hidden relative z-10 p-2 md:p-4 pb-4 gap-4 md:gap-6">
-
-        {/* LEFT: Maze Area (70% - 75%) */}
-        <div className="flex-1 flex flex-col items-center justify-center relative min-w-0" ref={containerRef}>
-          {/* Maze container Glow */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="w-[70%] h-[70%] blur-[80px] opacity-20 rounded-full" style={{ backgroundColor: t.playerColor }} />
-          </div>
-          {/* Maze container glass frame */}
+          {/* LEFT: Maze Area */}
           <div
-            className={`relative backdrop-blur-md rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
-            style={{ width: 'fit-content', height: 'fit-content', maxWidth: '100%', maxHeight: '100%' }}
+            className="flex-1 flex flex-col items-center justify-center relative min-w-0"
+            ref={containerRef}
           >
-            {/* The inner bounds that wrap the maze, with a small padding so walls don't clip against rounded border */}
+            {/* Maze container Glow - hardware accelerated radial gradient, zero blur compositing */}
             <div
-              className={`relative overflow-hidden rounded-xl border p-1 md:p-1.5 ${appIsDark ? 'border-white/5 bg-black/10' : 'border-black/5 bg-white/30'}`}
-            >
-              <div className="relative" style={{ width: MAZE_WIDTH * cellSize, height: MAZE_HEIGHT * cellSize }}>
-                {maze.length > 0 && (
-                  <>
-                    <MazeCanvas maze={maze} cellSize={cellSize} mazeWidth={MAZE_WIDTH} mazeHeight={MAZE_HEIGHT}
-                      theme={theme} visitedPath={visitedPath} optimalPath={optimalPath} replayIndex={replayIndex} difficulty={difficulty}
-                      gameMode={gameMode} fogCountdown={fogCountdown} playerPos={playerPos} />
-                    {!isFinished && (
-                      <EndMarkerPulse mazeWidth={MAZE_WIDTH} mazeHeight={MAZE_HEIGHT} cellSize={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} playerEmoji={playerEmoji} />
-                    )}
-                    {!isReplaying && (
-                      <Player position={playerPos} size={cellSize} theme={theme} isKidsMode={difficulty === 'Kids'} playerEmoji={playerEmoji} />
-                    )}
-                  </>
-                )}
+              className="absolute inset-0 pointer-events-none opacity-25"
+              style={{
+                background: `radial-gradient(circle at 50% 50%, ${t.playerColor} 0%, transparent 65%)`,
+              }}
+            />
 
-                {/* Fog Countdown UI overlay on maze */}
-                {gameMode === 'Challenge' && fogCountdown > 0 && !isFinished && (
-                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center">
-                    <motion.div
-                      key={fogCountdown} // forces re-render animation each second
-                      initial={{ opacity: 0, y: -10, scale: 0.8 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      className={`px-4 py-2 rounded-full backdrop-blur-md border shadow-lg font-bold flex items-center gap-2 ${appIsDark ? 'bg-slate-900/80 border-rose-500/50 text-rose-400' : 'bg-white/80 border-red-500/50 text-red-600'}`}
-                    >
-                      <Clock size={16} className={fogCountdown <= 3 ? 'animate-pulse' : ''} />
-                      {text.fogWarning || 'Fog in'} {fogCountdown}s
-                    </motion.div>
-                  </div>
-                )}
+            {/* Maze container glass frame */}
+            <div
+              className={`relative backdrop-blur-md rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
+              style={{
+                width: 'fit-content',
+                height: 'fit-content',
+                maxWidth: '100%',
+                maxHeight: '100%',
+              }}
+            >
+              {/* Inner bounds */}
+              <div
+                className={`relative overflow-hidden rounded-xl border p-1 md:p-1.5 ${
+                  appIsDark ? 'border-white/5 bg-black/10' : 'border-black/5 bg-white/30'
+                }`}
+              >
+                <div
+                  className="relative"
+                  style={{
+                    width: MAZE_WIDTH * cellSize,
+                    height: MAZE_HEIGHT * cellSize,
+                  }}
+                >
+                  {maze.length > 0 && (
+                    <>
+                      <MazeCanvas
+                        maze={maze}
+                        cellSize={cellSize}
+                        mazeWidth={MAZE_WIDTH}
+                        mazeHeight={MAZE_HEIGHT}
+                        theme={theme}
+                        visitedPath={visitedPath}
+                        optimalPath={optimalPath}
+                        replayIndex={replayIndex}
+                        difficulty={difficulty}
+                        gameMode={gameMode}
+                        fogCountdown={fogCountdown}
+                        playerPos={playerPos}
+                      />
+                      <EndMarkerPulse
+                        mazeWidth={MAZE_WIDTH}
+                        mazeHeight={MAZE_HEIGHT}
+                        cellSize={cellSize}
+                        theme={theme}
+                        isKidsMode={difficulty === 'Kids'}
+                        playerEmoji={playerEmoji}
+                      />
+                      {!isReplaying && (
+                        <Player
+                          position={playerPos}
+                          size={cellSize}
+                          theme={theme}
+                          isKidsMode={difficulty === 'Kids'}
+                          playerEmoji={playerEmoji}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* Fog Countdown UI overlay on maze */}
+                  {gameMode === 'Challenge' && fogCountdown > 0 && !isFinished && (
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 pointer-events-none flex flex-col items-center">
+                      <motion.div
+                        key={fogCountdown}
+                        initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className={`px-4 py-2 rounded-full backdrop-blur-md border shadow-lg font-bold flex items-center gap-2 ${
+                          appIsDark
+                            ? 'bg-slate-900/80 border-rose-500/50 text-rose-400'
+                            : 'bg-white/80 border-red-500/50 text-red-600'
+                        }`}
+                      >
+                        <Clock
+                          size={16}
+                          className={fogCountdown <= 3 ? 'animate-pulse' : ''}
+                        />
+                        {text.fogWarning || 'Fog in'} {fogCountdown}s
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop keyboard hints */}
+            <div
+              className={`hidden lg:flex mt-6 text-sm font-mono gap-8 opacity-60 ${t.text}`}
+            >
+              <div className="flex items-center gap-2">
+                <span className="font-bold tracking-widest uppercase opacity-80">
+                  Controls
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 border border-current rounded/80 bg-black/5 dark:bg-white/5">
+                  W A S D / Arrow Keys
+                </span>
+                <span>— Move</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-1 border border-current rounded/80 bg-black/5 dark:bg-white/5">
+                  R
+                </span>
+                <span>— Generate New Maze</span>
+              </div>
+            </div>
+
+            {/* Mobile D-pad */}
+            <div className="lg:hidden mt-3 shrink-0">
+              <div className="grid grid-cols-3 gap-2">
+                <div />
+                <ControlButton
+                  icon={<ChevronUp size={22} />}
+                  onClick={() => onPlayerMove(0, -1)}
+                  ariaLabel="Move Up"
+                />
+                <div />
+                <ControlButton
+                  icon={<ChevronLeft size={22} />}
+                  onClick={() => onPlayerMove(-1, 0)}
+                  ariaLabel="Move Left"
+                />
+                <ControlButton
+                  icon={<ChevronDown size={22} />}
+                  onClick={() => onPlayerMove(0, 1)}
+                  ariaLabel="Move Down"
+                />
+                <ControlButton
+                  icon={<ChevronRight size={22} />}
+                  onClick={() => onPlayerMove(1, 0)}
+                  ariaLabel="Move Right"
+                />
               </div>
             </div>
           </div>
 
-          {/* Desktop keyboard hints */}
-          <div className={`hidden lg:flex mt-6 text-sm font-mono gap-8 opacity-60 ${t.text}`}>
-            <div className="flex items-center gap-2">
-              <span className="font-bold tracking-widest uppercase opacity-80">Controls</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 border border-current rounded/80 bg-black/5 dark:bg-white/5">W A S D / Arrow Keys</span>
-              <span>— Move</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 border border-current rounded/80 bg-black/5 dark:bg-white/5">R</span>
-              <span>— Generate New Maze</span>
-            </div>
-          </div>
+          {/* Mobile backdrop overlay */}
+          {showMobileSidebar && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-35 transition-opacity"
+              onClick={closeMobileSidebar}
+              aria-label="Close sidebar backdrop"
+            />
+          )}
 
-          {/* Mobile D-pad */}
-          <div className="lg:hidden mt-3 shrink-0">
-            <div className="grid grid-cols-3 gap-2">
-              <div />
-              <ControlButton icon={<ChevronUp size={22} />} onClick={moveUp} />
-              <div />
-              <ControlButton icon={<ChevronLeft size={22} />} onClick={moveLeft} />
-              <ControlButton icon={<ChevronDown size={22} />} onClick={moveDown} />
-              <ControlButton icon={<ChevronRight size={22} />} onClick={moveRight} />
+          {/* RIGHT: Sidebar / Mobile Drawer */}
+          <aside
+            className={`
+            ${showMobileSidebar ? 'translate-x-0' : 'translate-x-[115%]'}
+            lg:translate-x-0 transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)
+            fixed lg:relative top-[4.5rem] lg:top-0 right-3 lg:right-0 bottom-3 lg:bottom-0 z-40 lg:z-30
+            w-[calc(100vw-1.5rem)] sm:w-[380px] lg:w-[400px] max-w-[400px] shrink-0 flex flex-col
+            rounded-[28px] border shadow-2xl backdrop-blur-2xl overflow-hidden
+            ${appIsDark ? 'bg-slate-900/90 border-white/10 text-white' : 'bg-white/90 border-black/10 text-slate-800'}
+          `}
+          >
+            {/* Mobile Drawer Header with clearance from navbar */}
+            <div
+              className={`lg:hidden flex items-center justify-between px-4 py-3 border-b shrink-0 ${
+                appIsDark ? 'bg-slate-900/95 border-white/10' : 'bg-white/95 border-black/5'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className={t.text} />
+                <span className="text-sm font-black tracking-tight">
+                  {lang === 'zh' ? '控制中心与数据' : 'Game Dashboard'}
+                </span>
+              </div>
+              <button
+                onClick={closeMobileSidebar}
+                className={`p-1.5 rounded-full transition-colors active:scale-90 ${
+                  appIsDark ? 'hover:bg-white/10 text-slate-400 hover:text-white' : 'hover:bg-black/5 text-slate-500 hover:text-slate-900'
+                }`}
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
             </div>
-          </div>
+
+            <div className="flex-1 flex flex-col gap-3.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4">
+              {/* --- Victory / Hint Result (Shown prominently at top when finished) --- */}
+              {isFinished && (
+                <ResultPanel
+                  isFinished={isFinished}
+                  appIsDark={appIsDark}
+                  gameState={gameState}
+                  theme={theme}
+                  text={text}
+                  finalTime={finalTime}
+                  optLen={optLen}
+                  moves={moves}
+                  efficiency={efficiency}
+                  rating={rating}
+                  lang={lang}
+                />
+              )}
+
+              {/* --- Stats & Mini Map Panel --- */}
+              <InfoPanel
+                appIsDark={appIsDark}
+                text={text}
+                maze={maze}
+                mazeWidth={MAZE_WIDTH}
+                mazeHeight={MAZE_HEIGHT}
+                theme={theme}
+                visitedPath={visitedPath}
+                optimalPath={optimalPath}
+                replayIndex={replayIndex}
+                difficulty={difficulty}
+                startTime={startTime}
+                gameState={gameState}
+                moves={moves}
+                visible={showMobileSidebar}
+              />
+
+              {/* --- Game Controls --- */}
+              <ControlPanel
+                appIsDark={appIsDark}
+                text={text}
+                difficulty={difficulty}
+                setDifficulty={setDifficulty}
+                theme={theme}
+                isFinished={isFinished}
+                gameState={gameState}
+                restartLevel={restartLevel}
+                handleGiveUp={handleGiveUp}
+                startNewLevel={startNewLevel}
+                isReplaying={isReplaying}
+                startReplay={startReplay}
+                stopReplay={stopReplay}
+                soundEnabled={soundEnabled}
+                setSoundEnabled={setSoundEnabled}
+                onAction={closeMobileSidebar}
+              />
+            </div>
+          </aside>
         </div>
-
-        {/* RIGHT: Sidebar (30%) */}
-        <aside className={`
-          ${showMobileSidebar ? 'translate-x-0' : 'translate-x-[110%]'}
-          lg:translate-x-0 transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1)
-          absolute lg:relative right-2 lg:right-0 top-0 bottom-0 z-30
-          w-[360px] lg:w-[400px] shrink-0 flex flex-col py-0 md:py-1
-        `}>
-          <div className="flex-1 flex flex-col gap-4 overflow-y-auto overflow-x-hidden pr-2 pb-2">
-
-            {/* --- Stats & Mini Map Panel --- */}
-            <InfoPanel
-              appIsDark={appIsDark}
-              text={text}
-              maze={maze}
-              mazeWidth={MAZE_WIDTH}
-              mazeHeight={MAZE_HEIGHT}
-              theme={theme}
-              visitedPath={visitedPath}
-              optimalPath={optimalPath}
-              replayIndex={replayIndex}
-              difficulty={difficulty}
-              startTime={startTime}
-              gameState={gameState}
-              moves={moves}
-            />
-
-            {/* --- Game Controls --- */}
-            <ControlPanel
-              appIsDark={appIsDark}
-              text={text}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              theme={theme}
-              isFinished={isFinished}
-              gameState={gameState}
-              restartLevel={restartLevel}
-              handleGiveUp={handleGiveUp}
-              startNewLevel={startNewLevel}
-              isReplaying={isReplaying}
-              startReplay={startReplay}
-              stopReplay={stopReplay}
-              soundEnabled={soundEnabled}
-              setSoundEnabled={setSoundEnabled}
-            />
-
-            {/* --- Victory Result --- */}
-            <ResultPanel
-              isFinished={isFinished}
-              appIsDark={appIsDark}
-              gameState={gameState}
-              theme={theme}
-              text={text}
-              finalTime={finalTime}
-              optLen={optLen}
-              moves={moves}
-              efficiency={efficiency}
-              rating={rating}
-            />
-
-          </div>
-        </aside>
-      </div>
       )}
 
       {/* ========== LEADERBOARD PAGE ========== */}
@@ -621,17 +553,19 @@ export default function Game() {
 
       {/* ========== MODALS ========== */}
       <AnimatePresence>
-        <LoginModal
-          showLogin={showLogin}
-          setShowLogin={setShowLogin}
-          appIsDark={appIsDark}
-          theme={theme}
-          lang={lang}
-          playerName={playerName}
-          setPlayerName={setPlayerName}
-          playerEmoji={playerEmoji}
-          setPlayerEmoji={setPlayerEmoji}
-        />
+        {showLogin && (
+          <LoginModal
+            showLogin={showLogin}
+            setShowLogin={setShowLogin}
+            appIsDark={appIsDark}
+            theme={theme}
+            lang={lang}
+            playerName={playerName}
+            setPlayerName={setPlayerName}
+            playerEmoji={playerEmoji}
+            setPlayerEmoji={setPlayerEmoji}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
