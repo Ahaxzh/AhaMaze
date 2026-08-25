@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, X, Sparkles, Dices, Check, Smile } from 'lucide-react';
 import { Language, Theme } from '../../types/game';
-import { THEME_CONFIGS } from '../../constants/game';
+import { THEME_CONFIGS, AVATAR_EMOJIS } from '../../constants/game';
 
 interface LoginModalProps {
   showLogin: boolean;
@@ -16,41 +16,16 @@ interface LoginModalProps {
   setPlayerEmoji: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const AVATAR_GROUPS = [
-  {
-    id: 'all',
-    labelZh: '全部',
-    labelEn: 'All',
-  },
-  {
-    id: 'pets',
-    labelZh: '萌宠可爱',
-    labelEn: 'Cute Pets',
-    emojis: ['💖', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊', '🐨', '🐻', '🐯', '🦁', '🐵', '🐸', '🐧', '🐤', '🐣', '🦆', '🦉', '🐴', '🐢', '🦖', '🦕', '🐙'],
-  },
-  {
-    id: 'magic',
-    labelZh: '梦幻闪耀',
-    labelEn: 'Magic',
-    emojis: ['⭐', '🌟', '💫', '✨', '👑', '💎', '🌈', '🔥', '🌊', '🍀', '🚀', '🎯', '🎃', '💩', '☀️', '🌤', '⛅', '🌸', '🌹', '🌻'],
-  },
-  {
-    id: 'food',
-    labelZh: '水果甜点',
-    labelEn: 'Yummy',
-    emojis: ['🍓', '🍉', '🍑', '🍒', '🍌', '🍎', '🍐', '🍊', '🍋', '🍇', '🍍', '🥥', '🥑', '🥦', '🥕', '🍦', '🍩', '🍰', '🍪', '🍫', '🍭'],
-  },
-];
+const PETS_SET = new Set(['💖', '🩷', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊', '🐨', '🐻', '🐯', '🦁', '🐵', '🐸', '🐧', '🐤', '🐣', '🦆', '🦉', '🐴', '🐢', '🦖', '🦕', '🐙', '🐝', '🦋', '🐞']);
+const MAGIC_SET = new Set(['⭐', '🌟', '💫', '✨', '👑', '💎', '🌈', '🔥', '🌊', '🍀', '🚀', '🎯', '🎃', '💩', '☀️', '🌤', '⛅', '🌸', '🌹', '🌻', '💸', '💰']);
+const FOOD_SET = new Set(['🍓', '🍉', '🍑', '🍒', '🍌', '🍎', '🍐', '🍊', '🍋', '🍇', '🍍', '🥥', '🥑', '🥦', '🥕', '🍦', '🍩', '🍰', '🍪', '🍫', '🍭', '🥝', '🍅', '🌽']);
 
-const ALL_EMOJIS = Array.from(
-  new Set(
-    AVATAR_GROUPS.flatMap((g) => g.emojis || []).concat([
-      '💖', '🩷', '⭐', '🌟', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊',
-      '🐸', '🐵', '🐧', '🦁', '🐯', '🐤', '🐣', '👑', '💎', '🍓',
-      '🍉', '🍑', '🌈', '🔥', '🌊', '🍀', '🎃', '💩', '🚀', '🎯',
-    ])
-  )
-);
+const AVATAR_GROUPS = [
+  { id: 'all', labelZh: '全部', labelEn: 'All' },
+  { id: 'pets', labelZh: '萌宠可爱', labelEn: 'Cute Pets' },
+  { id: 'magic', labelZh: '梦幻闪耀', labelEn: 'Magic' },
+  { id: 'food', labelZh: '水果甜点', labelEn: 'Yummy' },
+];
 
 const RANDOM_NAMES_ZH = [
   '星光探索者', '迷宫魔法师', '彩虹小兔', '幻影骑士', '糖果精灵',
@@ -80,15 +55,17 @@ export const LoginModal = React.memo(function LoginModal({
   const [activeTab, setActiveTab] = useState('all');
 
   const displayedEmojis = useMemo(() => {
-    if (activeTab === 'all') return ALL_EMOJIS;
-    const group = AVATAR_GROUPS.find((g) => g.id === activeTab);
-    return group?.emojis || ALL_EMOJIS;
+    if (activeTab === 'all') return AVATAR_EMOJIS;
+    if (activeTab === 'pets') return AVATAR_EMOJIS.filter((e) => PETS_SET.has(e));
+    if (activeTab === 'magic') return AVATAR_EMOJIS.filter((e) => MAGIC_SET.has(e));
+    if (activeTab === 'food') return AVATAR_EMOJIS.filter((e) => FOOD_SET.has(e));
+    return AVATAR_EMOJIS;
   }, [activeTab]);
 
   if (!showLogin) return null;
 
   const handleRandomRoll = () => {
-    const randomEmoji = ALL_EMOJIS[Math.floor(Math.random() * ALL_EMOJIS.length)];
+    const randomEmoji = AVATAR_EMOJIS[Math.floor(Math.random() * AVATAR_EMOJIS.length)] || '💖';
     setLocalEmoji(randomEmoji);
     const namePool = lang === 'zh' ? RANDOM_NAMES_ZH : RANDOM_NAMES_EN;
     const randomName = namePool[Math.floor(Math.random() * namePool.length)];
