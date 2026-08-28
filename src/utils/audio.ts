@@ -13,16 +13,16 @@ const initAudio = (): AudioContext | null => {
   if (!audioCtx) {
     try {
       audioCtx = new AudioContextClass();
-      // Setup master dynamics compressor to prevent volume clipping or sudden loud/quiet bursts
+      // Setup master dynamics compressor to prevent volume clipping while keeping sound loud & crisp
       compressor = audioCtx.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-18, audioCtx.currentTime);
+      compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
       compressor.knee.setValueAtTime(30, audioCtx.currentTime);
-      compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+      compressor.ratio.setValueAtTime(4, audioCtx.currentTime);
       compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
       compressor.release.setValueAtTime(0.2, audioCtx.currentTime);
 
       masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+      masterGain.gain.setValueAtTime(0.9, audioCtx.currentTime);
 
       masterGain.connect(compressor);
       compressor.connect(audioCtx.destination);
@@ -37,9 +37,19 @@ const initAudio = (): AudioContext | null => {
 };
 
 /**
+ * Synchronously resume audio context inside user gesture (crucial for iOS Safari / WebKit)
+ */
+export const resumeAudio = () => {
+  const ctx = initAudio();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+};
+
+/**
  * Play move sound:
- * - Kids mode: Delightful bubble water pop (Pop! 🫧)
- * - Standard mode: Crisp step click
+ * - Kids mode: Plump, bouncy, clearly audible bubble water pop (Pop! 🫧)
+ * - Standard mode: Crisp wooden step tick
  */
 export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
   if (!enabled) return;
@@ -51,14 +61,15 @@ export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
   const gain = ctx.createGain();
 
   if (isKids) {
-    // Joyful Bubble Pop: Fast sine frequency sweep up and down
+    // 🫧 Plump, juicy, bouncy bubble pop that sounds great on phone speakers (~110ms)
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(520, now);
-    osc.frequency.exponentialRampToValueAtTime(1100, now + 0.02);
-    osc.frequency.exponentialRampToValueAtTime(450, now + 0.045);
+    osc.frequency.setValueAtTime(580, now);
+    osc.frequency.exponentialRampToValueAtTime(1400, now + 0.035);
+    osc.frequency.exponentialRampToValueAtTime(650, now + 0.09);
 
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.setValueAtTime(0.22, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
 
     osc.connect(gain);
     gain.connect(masterGain);
@@ -71,15 +82,15 @@ export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
     };
 
     osc.start(now);
-    osc.stop(now + 0.045);
+    osc.stop(now + 0.11);
   } else {
-    // Crisp step tick
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.05);
+    // Crisp step tap (~70ms)
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.06);
 
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
 
     osc.connect(gain);
     gain.connect(masterGain);
@@ -92,7 +103,7 @@ export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
     };
 
     osc.start(now);
-    osc.stop(now + 0.05);
+    osc.stop(now + 0.07);
   }
 };
 
@@ -112,19 +123,19 @@ export const playBumpSound = (enabled: boolean, isKids: boolean = false) => {
 
   if (isKids) {
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(240, now);
-    osc.frequency.exponentialRampToValueAtTime(160, now + 0.03);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(260, now + 0.11);
 
-    gain.gain.setValueAtTime(0.07, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
   } else {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(60, now + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(60, now + 0.06);
 
-    gain.gain.setValueAtTime(0.05, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
   }
 
   osc.connect(gain);
@@ -138,7 +149,7 @@ export const playBumpSound = (enabled: boolean, isKids: boolean = false) => {
   };
 
   osc.start(now);
-  osc.stop(now + 0.06);
+  osc.stop(now + 0.12);
 };
 
 /**

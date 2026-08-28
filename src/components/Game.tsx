@@ -48,6 +48,7 @@ import { useMazeGame } from '../hooks/useMazeGame';
 import { useGamepad } from '../hooks/useGamepad';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useTouchSwipe } from '../hooks/useTouchSwipe';
+import { resumeAudio, playMoveSound } from '../utils/audio';
 
 const ControlButton = React.memo(function ControlButton({
   icon,
@@ -464,7 +465,14 @@ export default function Game() {
 
                   <button
                     type="button"
-                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    onClick={() => {
+                      const next = !soundEnabled;
+                      setSoundEnabled(next);
+                      if (next) {
+                        resumeAudio();
+                        playMoveSound(true, difficulty === 'Kids');
+                      }
+                    }}
                     className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
                       soundEnabled
                         ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-300/40 shadow-emerald-500/25'
