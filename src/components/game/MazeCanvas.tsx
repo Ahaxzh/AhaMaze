@@ -409,7 +409,7 @@ export const Player = React.memo(function Player({
         top: 0,
         left: 0,
         transform: `translate3d(${position.x * size}px, ${position.y * size}px, 0)`,
-        transition: 'transform 80ms cubic-bezier(0.2, 0, 0.2, 1)',
+        transition: 'transform 48ms cubic-bezier(0.1, 0, 0.1, 1)',
         willChange: 'transform',
       }}
     >

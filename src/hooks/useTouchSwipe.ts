@@ -9,7 +9,7 @@ interface UseTouchSwipeOptions {
 export function useTouchSwipe({
   enabled,
   onMove,
-  threshold = 20,
+  threshold = 16,
 }: UseTouchSwipeOptions) {
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const touchAnchorRef = useRef<{ x: number; y: number } | null>(null);
@@ -21,8 +21,8 @@ export function useTouchSwipe({
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
-  const STEP_COOLDOWN = 110; // ms between consecutive steps during long continuous drag
-  const DRAG_STEP_THRESHOLD = 32; // px needed for subsequent steps when dragging
+  const STEP_COOLDOWN = 55; // 55ms (~18 steps/sec) for thrilling turbo glide through straight corridors
+  const DRAG_STEP_THRESHOLD = 18; // 18px per subsequent step during drag
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length > 0) {
