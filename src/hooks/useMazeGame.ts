@@ -279,7 +279,8 @@ export function useMazeGame({
     setIsReplaying(true);
     setReplayIndex(0);
 
-    const speed = Math.max(40, Math.min(150, 8000 / visitedPath.length));
+    const isKids = difficultyRef.current === 'Kids';
+    const speed = Math.max(45, Math.min(140, 7000 / visitedPath.length));
     let idx = 0;
     replayTimerRef.current = setInterval(() => {
       idx++;
@@ -288,9 +289,15 @@ export function useMazeGame({
         replayTimerRef.current = null;
         setIsReplaying(false);
         setReplayIndex(-1);
+        if (isKids) {
+          playWinSound(soundEnabledRef.current, true);
+        }
         return;
       }
       setReplayIndex(idx);
+      if (isKids && idx % 2 === 0) {
+        playMoveSound(soundEnabledRef.current, true);
+      }
     }, speed);
   }, [visitedPath, stopReplay]);
 

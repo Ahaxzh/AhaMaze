@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Flag, Clock } from 'lucide-react';
+import { Trophy, Flag, Clock, Play, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import { Theme, Language } from '../../types/game';
 import { THEME_CONFIGS } from '../../constants/game';
 
@@ -16,10 +16,34 @@ interface ResultPanelProps {
   efficiency: number;
   rating: string;
   lang?: Language;
+  isKidsMode?: boolean;
+  startReplay?: () => void;
+  stopReplay?: () => void;
+  isReplaying?: boolean;
+  startNewLevel?: () => void;
+  restartLevel?: () => void;
+  onAction?: () => void;
 }
 
 export const ResultPanel = React.memo(function ResultPanel({
-  isFinished, appIsDark, gameState, theme, text, finalTime, optLen, moves, efficiency, rating, lang = 'zh'
+  isFinished,
+  appIsDark,
+  gameState,
+  theme,
+  text,
+  finalTime,
+  optLen,
+  moves,
+  efficiency,
+  rating,
+  lang = 'zh',
+  isKidsMode = false,
+  startReplay,
+  stopReplay,
+  isReplaying = false,
+  startNewLevel,
+  restartLevel,
+  onAction,
 }: ResultPanelProps) {
   const t = THEME_CONFIGS[theme];
 
@@ -121,6 +145,67 @@ export const ResultPanel = React.memo(function ResultPanel({
           </div>
         </>
       )}
+
+      {/* --- Action Buttons (Watch Replay, Next Level, Replay) --- */}
+      <div className="flex flex-col gap-2.5 mt-1 pt-3 border-t border-slate-500/15">
+        {gameState === 'won' && startReplay && (
+          <button
+            type="button"
+            onClick={() => {
+              onAction?.();
+              if (isReplaying) stopReplay?.();
+              else startReplay?.();
+            }}
+            className={`w-full py-3 px-4 rounded-xl font-black text-sm text-white shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 ${
+              isReplaying
+                ? 'bg-rose-500 animate-pulse'
+                : isKidsMode
+                ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:opacity-95'
+                : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95'
+            }`}
+          >
+            <Play size={18} fill="currentColor" className={isReplaying ? 'animate-spin' : ''} />
+            <span>
+              {isReplaying
+                ? lang === 'zh'
+                  ? '⏹️ 停止回放'
+                  : '⏹️ Stop Replay'
+                : lang === 'zh'
+                ? '🎬 看看我是怎么走的 (路径回放)'
+                : '🎬 Watch Path Replay'}
+            </span>
+          </button>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              onAction?.();
+              startNewLevel?.();
+            }}
+            className="py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white"
+          >
+            <RefreshCw size={14} />
+            <span>{lang === 'zh' ? '🚀 下一关' : text.nextLevel || 'Next Maze'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onAction?.();
+              restartLevel?.();
+            }}
+            className={`py-2.5 px-3 rounded-xl font-bold text-xs shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
+              appIsDark
+                ? 'bg-white/10 text-white hover:bg-white/15'
+                : 'bg-black/5 text-slate-800 hover:bg-black/10'
+            }`}
+          >
+            <RotateCcw size={14} />
+            <span>{lang === 'zh' ? '🔄 再玩一次' : text.replay || 'Replay'}</span>
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 });

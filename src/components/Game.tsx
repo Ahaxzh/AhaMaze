@@ -8,6 +8,11 @@ import {
   Clock,
   X,
   Sparkles,
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  HelpCircle,
+  Play,
 } from 'lucide-react';
 
 import {
@@ -419,9 +424,38 @@ export default function Game() {
               </div>
             </div>
 
-            {/* Mobile D-pad */}
-            <div className="lg:hidden mt-3 shrink-0">
-              <div className="grid grid-cols-3 gap-2">
+            {/* Mobile Bottom Game Dock (掌机式中控台) */}
+            <div className="lg:hidden mt-2 shrink-0 flex items-center justify-center gap-2.5 sm:gap-4 w-full max-w-sm mx-auto px-1 select-none">
+              {/* Left Flank Actions: New Maze + Sound */}
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => startNewLevel()}
+                  className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-col items-center justify-center text-slate-200 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer"
+                  aria-label={text.newMaze}
+                  title={text.newMaze}
+                >
+                  <RefreshCw size={17} />
+                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer ${
+                    soundEnabled
+                      ? 'bg-slate-800/90 border-slate-700/80 text-emerald-400'
+                      : 'bg-slate-800/50 border-slate-800 text-slate-500'
+                  }`}
+                  aria-label={text.sound}
+                  title={text.sound}
+                >
+                  {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{soundEnabled ? '声音' : '静音'}</span>
+                </button>
+              </div>
+
+              {/* Center Ergonomic D-Pad */}
+              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-3xl bg-black/20 border border-white/5 shadow-inner">
                 <div />
                 <ControlButton
                   icon={<ChevronUp size={22} />}
@@ -444,6 +478,43 @@ export default function Game() {
                   onClick={() => onPlayerMove(1, 0)}
                   ariaLabel="Move Right"
                 />
+              </div>
+
+              {/* Right Flank Actions: Hint + Path Replay */}
+              <div className="flex flex-col gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isFinished) restartLevel();
+                    else handleGiveUp();
+                  }}
+                  className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-col items-center justify-center text-amber-400 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer"
+                  aria-label={text.giveUp}
+                  title={text.giveUp}
+                >
+                  <HelpCircle size={17} />
+                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isReplaying) stopReplay();
+                    else if (visitedPath.length >= 2) startReplay();
+                  }}
+                  disabled={visitedPath.length < 2}
+                  className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer ${
+                    isReplaying
+                      ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
+                      : visitedPath.length >= 2
+                      ? 'bg-slate-800/90 border-slate-700/80 text-cyan-400 active:bg-cyan-500 active:text-slate-950'
+                      : 'bg-slate-800/40 border-slate-800/40 text-slate-600 opacity-40 cursor-not-allowed'
+                  }`}
+                  aria-label={text.pathReplay}
+                  title={text.pathReplay}
+                >
+                  <Play size={17} className={isReplaying ? 'animate-spin' : ''} fill={isReplaying ? 'currentColor' : 'none'} />
+                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{isReplaying ? '停止' : '回放'}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -506,6 +577,13 @@ export default function Game() {
                   efficiency={efficiency}
                   rating={rating}
                   lang={lang}
+                  isKidsMode={difficulty === 'Kids'}
+                  startReplay={startReplay}
+                  stopReplay={stopReplay}
+                  isReplaying={isReplaying}
+                  startNewLevel={startNewLevel}
+                  restartLevel={restartLevel}
+                  onAction={closeMobileSidebar}
                 />
               )}
 
