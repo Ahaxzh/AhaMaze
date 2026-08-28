@@ -22,6 +22,7 @@ import {
   MAZE_SIZES,
   THEME_CONFIGS,
   TEXTS,
+  STORY_MATCH_MAP,
 } from '../constants/game';
 import { KidsBackground } from './backgrounds/KidsBackground';
 import { TopNavbar } from './layout/TopNavbar';
@@ -110,6 +111,7 @@ export default function Game() {
     replayIndex,
     isReplaying,
     isFinished,
+    facing,
     optLen,
     efficiency,
     rating,
@@ -300,6 +302,15 @@ export default function Game() {
               }}
             />
 
+            {/* Kids Story Pairing Banner */}
+            {difficulty === 'Kids' && playerEmoji && STORY_MATCH_MAP[playerEmoji] && (
+              <div className="mb-2 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-600 dark:text-pink-300 font-black text-xs md:text-sm tracking-wide shadow-sm select-none">
+                <span className="text-base">{playerEmoji}</span>
+                <span>{lang === 'zh' ? STORY_MATCH_MAP[playerEmoji].titleZh : STORY_MATCH_MAP[playerEmoji].titleEn}</span>
+                <span className="text-base">{STORY_MATCH_MAP[playerEmoji].goal}</span>
+              </div>
+            )}
+
             {/* Maze container glass frame */}
             <div
               className={`relative rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
@@ -354,6 +365,7 @@ export default function Game() {
                           theme={theme}
                           isKidsMode={difficulty === 'Kids'}
                           playerEmoji={playerEmoji}
+                          facing={facing}
                         />
                       )}
                     </>

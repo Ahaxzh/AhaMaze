@@ -103,42 +103,67 @@ export function useMazeGame({
     setFogCountdown(10);
   }, [stopReplay]);
 
+  const [facing, setFacing] = useState<'left' | 'right'>('right');
+
   const handleWin = useCallback(
     (currentMaze: Cell[][]) => {
       setGameState('won');
       const now = Date.now();
       const fTime = startTimeRef.current ? now - startTimeRef.current : 0;
       setFinalTime(fTime);
-      playWinSound(soundEnabledRef.current);
 
-      // Lightweight high-impact confetti burst (2 discrete bursts instead of continuous rAF loop)
+      const isKids = difficultyRef.current === 'Kids';
+      playWinSound(soundEnabledRef.current, isKids);
+
+      // Festive confetti celebration
       const t = THEME_CONFIGS[themeRef.current];
-      const colors = [t.playerColor, t.endColor, '#fbbf24', '#f43f5e'];
+      const colors = isKids
+        ? ['#f43f5e', '#fbbf24', '#38bdf8', '#a855f7', '#4ade80', '#fb7185']
+        : [t.playerColor, t.endColor, '#fbbf24', '#f43f5e'];
+
+      // Burst 1: Central Star Blast
       confetti({
-        particleCount: 35,
-        spread: 60,
-        origin: { y: 0.7 },
+        particleCount: isKids ? 45 : 35,
+        spread: isKids ? 80 : 60,
+        origin: { y: 0.65 },
         colors,
         disableForReducedMotion: true,
       });
+
+      // Burst 2: Side Cannons
       setTimeout(() => {
         confetti({
-          particleCount: 25,
+          particleCount: isKids ? 30 : 25,
           angle: 60,
-          spread: 50,
+          spread: 55,
           origin: { x: 0.1, y: 0.7 },
           colors,
           disableForReducedMotion: true,
         });
         confetti({
-          particleCount: 25,
+          particleCount: isKids ? 30 : 25,
           angle: 120,
-          spread: 50,
+          spread: 55,
           origin: { x: 0.9, y: 0.7 },
           colors,
           disableForReducedMotion: true,
         });
-      }, 200);
+      }, 180);
+
+      // Burst 3: Kids Special Golden Cascade
+      if (isKids) {
+        setTimeout(() => {
+          confetti({
+            particleCount: 35,
+            spread: 100,
+            origin: { y: 0.15 },
+            gravity: 0.7,
+            ticks: 200,
+            colors: ['#fde047', '#f472b6', '#38bdf8', '#c084fc'],
+            disableForReducedMotion: true,
+          });
+        }, 400);
+      }
 
       const w = mazeWidthRef.current;
       const h = mazeHeightRef.current;
@@ -194,6 +219,10 @@ export function useMazeGame({
       if (gameStateRef.current !== 'playing') return;
       if (!startTimeRef.current) setStartTime(Date.now());
 
+      const isKids = difficultyRef.current === 'Kids';
+      if (dx === -1) setFacing('left');
+      else if (dx === 1) setFacing('right');
+
       const pos = playerPosRef.current;
       const m = mazeRef.current;
       const w = mazeWidthRef.current;
@@ -206,23 +235,23 @@ export function useMazeGame({
       const newY = pos.y + dy;
 
       if (newX < 0 || newX >= w || newY < 0 || newY >= h) {
-        playBumpSound(soundEnabledRef.current);
+        playBumpSound(soundEnabledRef.current, isKids);
         return;
       }
       if (dx === 1 && currentCell.walls.right) {
-        playBumpSound(soundEnabledRef.current);
+        playBumpSound(soundEnabledRef.current, isKids);
         return;
       }
       if (dx === -1 && currentCell.walls.left) {
-        playBumpSound(soundEnabledRef.current);
+        playBumpSound(soundEnabledRef.current, isKids);
         return;
       }
       if (dy === 1 && currentCell.walls.bottom) {
-        playBumpSound(soundEnabledRef.current);
+        playBumpSound(soundEnabledRef.current, isKids);
         return;
       }
       if (dy === -1 && currentCell.walls.top) {
-        playBumpSound(soundEnabledRef.current);
+        playBumpSound(soundEnabledRef.current, isKids);
         return;
       }
 
@@ -235,7 +264,7 @@ export function useMazeGame({
         return next;
       });
 
-      playMoveSound(soundEnabledRef.current);
+      playMoveSound(soundEnabledRef.current, isKids);
 
       if (newX === w - 1 && newY === h - 1) {
         handleWin(m);
@@ -326,6 +355,7 @@ export function useMazeGame({
     replayIndex,
     isReplaying,
     isFinished,
+    facing,
     optLen,
     efficiency,
     rating,

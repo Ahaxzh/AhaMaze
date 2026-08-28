@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Cell } from '../../utils/maze';
 import { Position } from '../../types/game';
 import { Theme, Difficulty, GameMode, Language } from '../../types/game';
-import { THEME_CONFIGS } from '../../constants/game';
+import { THEME_CONFIGS, STORY_MATCH_MAP } from '../../constants/game';
 
 interface MazeCanvasProps {
   maze: Cell[][];
@@ -392,14 +392,18 @@ export const Player = React.memo(function Player({
   theme,
   isKidsMode,
   playerEmoji,
+  facing = 'right',
 }: {
   position: Position;
   size: number;
   theme: Theme;
   isKidsMode: boolean;
   playerEmoji: string;
+  facing?: 'left' | 'right';
 }) {
   const t = THEME_CONFIGS[theme];
+  const isFlipped = isKidsMode && facing === 'left';
+
   return (
     <div
       className="absolute z-20 flex items-center justify-center pointer-events-none"
@@ -415,8 +419,12 @@ export const Player = React.memo(function Player({
     >
       {isKidsMode ? (
         <div
-          className="select-none flex items-center justify-center"
-          style={{ fontSize: `${size * 0.75}px`, lineHeight: 1 }}
+          className="select-none flex items-center justify-center transition-transform duration-100"
+          style={{
+            fontSize: `${size * 0.75}px`,
+            lineHeight: 1,
+            transform: isFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+          }}
         >
           {playerEmoji}
         </div>
@@ -442,6 +450,7 @@ export const EndMarkerPulse = React.memo(function EndMarkerPulse({
   cellSize,
   theme,
   isKidsMode,
+  playerEmoji,
 }: {
   mazeWidth: number;
   mazeHeight: number;
@@ -452,13 +461,15 @@ export const EndMarkerPulse = React.memo(function EndMarkerPulse({
 }) {
   const t = THEME_CONFIGS[theme];
 
-  // Kids mode goal icon: Castle in Princess, Star in Starry, Trophy in other themes
+  // Kids mode goal icon: Match story goal from player emoji or fallback by theme
+  const matchedStory = playerEmoji ? STORY_MATCH_MAP[playerEmoji] : null;
   const kidGoalEmoji =
-    theme === 'Princess'
+    matchedStory?.goal ||
+    (theme === 'Princess'
       ? '🏰' // Magical Castle
       : theme === 'Starry'
       ? '🌟' // Shining Super Star
-      : '🏆'; // Victory Trophy
+      : '🏆'); // Victory Trophy
 
   return (
     <div
