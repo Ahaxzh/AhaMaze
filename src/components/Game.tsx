@@ -53,12 +53,9 @@ const ControlButton = React.memo(function ControlButton({
 }) {
   return (
     <button
-      className="w-14 h-14 rounded-full bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-slate-200 active:bg-cyan-500 active:text-slate-950 active:border-cyan-400 transition-colors shadow-md touch-manipulation"
+      type="button"
+      className="w-14 h-14 rounded-full bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-slate-200 active:bg-cyan-500 active:text-slate-950 active:border-cyan-400 transition-colors shadow-md touch-manipulation cursor-pointer select-none"
       onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      onTouchStart={(e) => {
         e.stopPropagation();
         onClick();
       }}

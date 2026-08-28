@@ -9,50 +9,77 @@ interface UseTouchSwipeOptions {
 export function useTouchSwipe({
   enabled,
   onMove,
-  threshold = 24,
+  threshold = 20,
 }: UseTouchSwipeOptions) {
-  const touchAnchorRef = useRef<{ x: number; y: number } | null>(null);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
-  const stepsTakenRef = useRef(0);
+  const touchAnchorRef = useRef<{ x: number; y: number } | null>(null);
+  const hasMovedRef = useRef(false);
+  const lastStepTimeRef = useRef(0);
+
   const onMoveRef = useRef(onMove);
   onMoveRef.current = onMove;
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
+  const STEP_COOLDOWN = 110; // ms between consecutive steps during long continuous drag
+  const DRAG_STEP_THRESHOLD = 32; // px needed for subsequent steps when dragging
+
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      touchAnchorRef.current = { x: touch.clientX, y: touch.clientY };
       touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: performance.now() };
-      stepsTakenRef.current = 0;
+      touchAnchorRef.current = { x: touch.clientX, y: touch.clientY };
+      hasMovedRef.current = false;
+      lastStepTimeRef.current = 0;
     }
   }, []);
 
   const onTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (!touchAnchorRef.current || !enabledRef.current || e.touches.length === 0) return;
+      if (!touchStartRef.current || !touchAnchorRef.current || !enabledRef.current || e.touches.length === 0) return;
 
       const touch = e.touches[0];
-      const dx = touch.clientX - touchAnchorRef.current.x;
-      const dy = touch.clientY - touchAnchorRef.current.y;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
+      const now = performance.now();
 
-      // Continuous step progression when sliding across cells
-      if (Math.max(absDx, absDy) >= threshold) {
-        if (absDx > absDy) {
-          const dirX = dx > 0 ? 1 : -1;
-          onMoveRef.current(dirX, 0);
-          // Advance anchor by threshold to allow continuous gliding
-          touchAnchorRef.current.x += dirX * threshold;
-          touchAnchorRef.current.y = touch.clientY;
-        } else {
-          const dirY = dy > 0 ? 1 : -1;
-          onMoveRef.current(0, dirY);
-          touchAnchorRef.current.y += dirY * threshold;
-          touchAnchorRef.current.x = touch.clientX;
+      // 1. Initial Swipe: Trigger exactly 1 step on first threshold crossing
+      if (!hasMovedRef.current) {
+        const dx = touch.clientX - touchStartRef.current.x;
+        const dy = touch.clientY - touchStartRef.current.y;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+
+        if (Math.max(absDx, absDy) >= threshold) {
+          if (absDx > absDy) {
+            onMoveRef.current(dx > 0 ? 1 : -1, 0);
+          } else {
+            onMoveRef.current(0, dy > 0 ? 1 : -1);
+          }
+          hasMovedRef.current = true;
+          lastStepTimeRef.current = now;
+          touchAnchorRef.current = { x: touch.clientX, y: touch.clientY };
         }
-        stepsTakenRef.current += 1;
+        return;
+      }
+
+      // 2. Continuous Drag Progression: strictly rate-limited with cooldown to prevent runaway dashing
+      if (now - lastStepTimeRef.current < STEP_COOLDOWN) return;
+
+      const dragDx = touch.clientX - touchAnchorRef.current.x;
+      const dragDy = touch.clientY - touchAnchorRef.current.y;
+      const absDragDx = Math.abs(dragDx);
+      const absDragDy = Math.abs(dragDy);
+
+      if (Math.max(absDragDx, absDragDy) >= DRAG_STEP_THRESHOLD) {
+        if (absDragDx > absDragDy) {
+          const dirX = dragDx > 0 ? 1 : -1;
+          onMoveRef.current(dirX, 0);
+          touchAnchorRef.current = { x: touch.clientX, y: touch.clientY };
+        } else {
+          const dirY = dragDy > 0 ? 1 : -1;
+          onMoveRef.current(0, dirY);
+          touchAnchorRef.current = { x: touch.clientX, y: touch.clientY };
+        }
+        lastStepTimeRef.current = now;
       }
     },
     [threshold]
@@ -61,21 +88,22 @@ export function useTouchSwipe({
   const onTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       if (!touchStartRef.current || !enabledRef.current) {
-        touchAnchorRef.current = null;
         touchStartRef.current = null;
+        touchAnchorRef.current = null;
+        hasMovedRef.current = false;
         return;
       }
 
-      // If no steps were triggered during move (e.g. quick micro-flick), check end displacement
-      if (stepsTakenRef.current === 0 && e.changedTouches.length > 0) {
+      // If finger was quickly released without move exceeding threshold (micro-flick)
+      if (!hasMovedRef.current && e.changedTouches.length > 0) {
         const touch = e.changedTouches[0];
         const dx = touch.clientX - touchStartRef.current.x;
         const dy = touch.clientY - touchStartRef.current.y;
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
-        const flickThreshold = 16; // lower threshold for quick release flicks
+        const FLICK_THRESHOLD = 15;
 
-        if (Math.max(absDx, absDy) >= flickThreshold) {
+        if (Math.max(absDx, absDy) >= FLICK_THRESHOLD) {
           if (absDx > absDy) {
             onMoveRef.current(dx > 0 ? 1 : -1, 0);
           } else {
@@ -84,17 +112,19 @@ export function useTouchSwipe({
         }
       }
 
-      touchAnchorRef.current = null;
       touchStartRef.current = null;
-      stepsTakenRef.current = 0;
+      touchAnchorRef.current = null;
+      hasMovedRef.current = false;
+      lastStepTimeRef.current = 0;
     },
     []
   );
 
   const onTouchCancel = useCallback(() => {
-    touchAnchorRef.current = null;
     touchStartRef.current = null;
-    stepsTakenRef.current = 0;
+    touchAnchorRef.current = null;
+    hasMovedRef.current = false;
+    lastStepTimeRef.current = 0;
   }, []);
 
   return {
@@ -104,4 +134,5 @@ export function useTouchSwipe({
     onTouchCancel,
   };
 }
+
 
