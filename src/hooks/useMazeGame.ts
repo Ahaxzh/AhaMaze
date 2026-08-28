@@ -209,14 +209,16 @@ export function useMazeGame({
     const m = mazeRef.current;
     const w = mazeWidthRef.current;
     const h = mazeHeightRef.current;
-    setOptimalPath(solveMaze(m, { x: 0, y: 0 }, { x: w - 1, y: h - 1 }));
-
-    onGameEndRef.current?.();
+    const pos = playerPosRef.current;
+    // Calculate path from current player position to end goal (or full path)
+    const optFromCurrent = solveMaze(m, pos, { x: w - 1, y: h - 1 });
+    const fullPath = solveMaze(m, { x: 0, y: 0 }, { x: w - 1, y: h - 1 });
+    setOptimalPath(optFromCurrent.length > 0 ? optFromCurrent : fullPath);
   }, [stopReplay]);
 
   const handleMove = useCallback(
     (dx: number, dy: number) => {
-      if (gameStateRef.current !== 'playing') return;
+      if (gameStateRef.current !== 'playing' && gameStateRef.current !== 'gaveUp') return;
       if (!startTimeRef.current) setStartTime(Date.now());
 
       const isKids = difficultyRef.current === 'Kids';

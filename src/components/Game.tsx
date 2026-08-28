@@ -138,7 +138,9 @@ export default function Game() {
     theme,
     soundEnabled,
     playerName,
-    onGameEnd: () => setShowMobileSidebar(true),
+    onGameEnd: () => {
+      // Keep mobile screen unobstructed so player can see celebration & replay
+    },
   });
 
   // Controls hooks (event-driven, 0 CPU polling when idle/no gamepad)
@@ -307,13 +309,20 @@ export default function Game() {
               }}
             />
 
-            {/* Kids Story Pairing Banner */}
-            {difficulty === 'Kids' && playerEmoji && STORY_MATCH_MAP[playerEmoji] && (
-              <div className="mb-2 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-600 dark:text-pink-300 font-black text-xs md:text-sm tracking-wide shadow-sm select-none">
-                <span className="text-base">{playerEmoji}</span>
-                <span>{lang === 'zh' ? STORY_MATCH_MAP[playerEmoji].titleZh : STORY_MATCH_MAP[playerEmoji].titleEn}</span>
-                <span className="text-base">{STORY_MATCH_MAP[playerEmoji].goal}</span>
+            {/* Banner: Hint State Banner or Kids Story Pairing Banner */}
+            {gameState === 'gaveUp' ? (
+              <div className="mb-2 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-300 font-black text-xs md:text-sm tracking-wide shadow-sm select-none animate-pulse-soft">
+                <span>🪄</span>
+                <span>{lang === 'zh' ? '魔法路线已标出，跟着走就能到终点啦！' : 'Hint path revealed, follow it to the goal!'}</span>
               </div>
+            ) : (
+              difficulty === 'Kids' && playerEmoji && STORY_MATCH_MAP[playerEmoji] && (
+                <div className="mb-2 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-600 dark:text-pink-300 font-black text-xs md:text-sm tracking-wide shadow-sm select-none">
+                  <span className="text-base">{playerEmoji}</span>
+                  <span>{lang === 'zh' ? STORY_MATCH_MAP[playerEmoji].titleZh : STORY_MATCH_MAP[playerEmoji].titleEn}</span>
+                  <span className="text-base">{STORY_MATCH_MAP[playerEmoji].goal}</span>
+                </div>
+              )
             )}
 
             {/* Maze container glass frame */}
