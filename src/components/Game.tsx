@@ -433,34 +433,34 @@ export default function Game() {
               </div>
             </div>
 
-            {/* Mobile Controls Section: Action Pill Bar + Spacious D-Pad */}
-            <div className="lg:hidden mt-2 shrink-0 flex flex-col items-center gap-2.5 w-full max-w-sm mx-auto px-2 select-none">
-              {/* 1. Quick Action Pill Bar */}
-              <div className="flex items-center justify-center gap-2 sm:gap-2.5 w-full">
-                {/* New Maze Button */}
+            {/* Mobile Controls Section: Bold 2x2 Action Grid + Spacious D-Pad */}
+            <div className="lg:hidden mt-2 shrink-0 flex flex-col items-center gap-3 w-full max-w-sm mx-auto px-2 select-none">
+              {/* 1. High-Contrast Bold 2x2 Action Grid */}
+              <div className="grid grid-cols-2 gap-2.5 w-full">
+                {/* New Maze Button - Vibrant Orange/Amber */}
                 <button
                   type="button"
                   onClick={() => startNewLevel()}
-                  className="flex-1 py-2 px-2.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer"
+                  className="h-11 px-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20 active:scale-95 transition-all touch-manipulation cursor-pointer border border-amber-300/30"
                 >
-                  <RefreshCw size={15} />
-                  <span>{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
+                  <RefreshCw size={16} className="shrink-0" />
+                  <span>{difficulty === 'Kids' ? '🎲 新关卡' : '🔄 新迷宫'}</span>
                 </button>
 
-                {/* Hint Button */}
+                {/* Hint Button - Vibrant Purple/Indigo */}
                 <button
                   type="button"
                   onClick={() => {
                     if (isFinished) restartLevel();
                     else handleGiveUp();
                   }}
-                  className="flex-1 py-2 px-2.5 rounded-2xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-500 dark:text-purple-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer"
+                  className="h-11 px-3 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/20 active:scale-95 transition-all touch-manipulation cursor-pointer border border-purple-300/30"
                 >
-                  <HelpCircle size={15} />
-                  <span>{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
+                  <HelpCircle size={16} className="shrink-0" />
+                  <span>{difficulty === 'Kids' ? '🪄 帮帮我' : '💡 提示路线'}</span>
                 </button>
 
-                {/* Path Replay Button */}
+                {/* Path Replay Button - Vibrant Pink/Rose */}
                 <button
                   type="button"
                   onClick={() => {
@@ -468,36 +468,40 @@ export default function Game() {
                     else if (visitedPath.length >= 2) startReplay();
                   }}
                   disabled={visitedPath.length < 2}
-                  className={`flex-1 py-2 px-2.5 rounded-2xl border font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer ${
+                  className={`h-11 px-3 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all touch-manipulation cursor-pointer border ${
                     isReplaying
-                      ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
+                      ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-rose-500/30'
                       : visitedPath.length >= 2
-                      ? 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-500/30 text-cyan-500 dark:text-cyan-400'
-                      : 'opacity-40 bg-slate-500/10 border-slate-500/20 text-slate-500 cursor-not-allowed'
+                      ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-pink-300/30 shadow-pink-500/20'
+                      : appIsDark
+                      ? 'bg-slate-800/80 text-slate-500 border-slate-700/50 opacity-50 cursor-not-allowed'
+                      : 'bg-slate-200 text-slate-400 border-slate-300 opacity-50 cursor-not-allowed'
                   }`}
                 >
-                  <Play size={15} fill={isReplaying ? 'currentColor' : 'none'} className={isReplaying ? 'animate-spin' : ''} />
-                  <span>{isReplaying ? '停止' : '回放'}</span>
+                  <Play size={16} fill={isReplaying ? 'currentColor' : 'none'} className={`shrink-0 ${isReplaying ? 'animate-spin' : ''}`} />
+                  <span>{isReplaying ? '⏹️ 停止' : '🎬 路径回放'}</span>
                 </button>
 
-                {/* Sound Toggle */}
+                {/* Sound Toggle - Vibrant Teal/Slate */}
                 <button
                   type="button"
                   onClick={() => setSoundEnabled(!soundEnabled)}
-                  className={`py-2 px-3 rounded-2xl border font-bold text-xs flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer ${
+                  className={`h-11 px-3 rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all touch-manipulation cursor-pointer border ${
                     soundEnabled
-                      ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-500 dark:text-emerald-400'
-                      : 'bg-slate-500/10 border-slate-500/20 text-slate-500'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-300/30 shadow-emerald-500/20'
+                      : appIsDark
+                      ? 'bg-slate-800 text-slate-400 border-slate-700'
+                      : 'bg-slate-200 text-slate-600 border-slate-300'
                   }`}
                   aria-label={soundEnabled ? 'Mute' : 'Unmute'}
-                  title={soundEnabled ? 'Mute' : 'Unmute'}
                 >
-                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  {soundEnabled ? <Volume2 size={16} className="shrink-0" /> : <VolumeX size={16} className="shrink-0" />}
+                  <span>{soundEnabled ? '🔊 声音: 开' : '🔇 声音: 关'}</span>
                 </button>
               </div>
 
               {/* 2. Big Spacious Ergonomic D-Pad */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 p-2 rounded-3xl bg-black/25 border border-white/10 shadow-xl max-w-[230px] mx-auto">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 p-2 rounded-3xl bg-black/30 border border-white/10 shadow-xl max-w-[240px] mx-auto mt-0.5">
                 <div />
                 <ControlButton
                   icon={<ChevronUp size={28} />}
