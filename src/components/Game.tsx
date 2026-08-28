@@ -60,7 +60,7 @@ const ControlButton = React.memo(function ControlButton({
   return (
     <button
       type="button"
-      className="w-14 h-14 rounded-full bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-slate-200 active:bg-cyan-500 active:text-slate-950 active:border-cyan-400 transition-colors shadow-md touch-manipulation cursor-pointer select-none"
+      className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-slate-800/95 border border-slate-700/90 flex items-center justify-center text-slate-100 active:bg-cyan-500 active:text-slate-950 active:scale-90 active:border-cyan-300 transition-all shadow-lg touch-manipulation cursor-pointer select-none"
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -424,77 +424,34 @@ export default function Game() {
               </div>
             </div>
 
-            {/* Mobile Bottom Game Dock (掌机式中控台) */}
-            <div className="lg:hidden mt-2 shrink-0 flex items-center justify-center gap-2.5 sm:gap-4 w-full max-w-sm mx-auto px-1 select-none">
-              {/* Left Flank Actions: New Maze + Sound */}
-              <div className="flex flex-col gap-2 items-center">
+            {/* Mobile Controls Section: Action Pill Bar + Spacious D-Pad */}
+            <div className="lg:hidden mt-2 shrink-0 flex flex-col items-center gap-2.5 w-full max-w-sm mx-auto px-2 select-none">
+              {/* 1. Quick Action Pill Bar */}
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5 w-full">
+                {/* New Maze Button */}
                 <button
                   type="button"
                   onClick={() => startNewLevel()}
-                  className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-col items-center justify-center text-slate-200 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer"
-                  aria-label={text.newMaze}
-                  title={text.newMaze}
+                  className="flex-1 py-2 px-2.5 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-500 dark:text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer"
                 >
-                  <RefreshCw size={17} />
-                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
+                  <RefreshCw size={15} />
+                  <span>{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer ${
-                    soundEnabled
-                      ? 'bg-slate-800/90 border-slate-700/80 text-emerald-400'
-                      : 'bg-slate-800/50 border-slate-800 text-slate-500'
-                  }`}
-                  aria-label={text.sound}
-                  title={text.sound}
-                >
-                  {soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
-                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{soundEnabled ? '声音' : '静音'}</span>
-                </button>
-              </div>
 
-              {/* Center Ergonomic D-Pad */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-3xl bg-black/20 border border-white/5 shadow-inner">
-                <div />
-                <ControlButton
-                  icon={<ChevronUp size={22} />}
-                  onClick={() => onPlayerMove(0, -1)}
-                  ariaLabel="Move Up"
-                />
-                <div />
-                <ControlButton
-                  icon={<ChevronLeft size={22} />}
-                  onClick={() => onPlayerMove(-1, 0)}
-                  ariaLabel="Move Left"
-                />
-                <ControlButton
-                  icon={<ChevronDown size={22} />}
-                  onClick={() => onPlayerMove(0, 1)}
-                  ariaLabel="Move Down"
-                />
-                <ControlButton
-                  icon={<ChevronRight size={22} />}
-                  onClick={() => onPlayerMove(1, 0)}
-                  ariaLabel="Move Right"
-                />
-              </div>
-
-              {/* Right Flank Actions: Hint + Path Replay */}
-              <div className="flex flex-col gap-2 items-center">
+                {/* Hint Button */}
                 <button
                   type="button"
                   onClick={() => {
                     if (isFinished) restartLevel();
                     else handleGiveUp();
                   }}
-                  className="w-12 h-12 rounded-2xl bg-slate-800/90 border border-slate-700/80 flex flex-col items-center justify-center text-amber-400 active:bg-amber-500 active:text-slate-950 active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer"
-                  aria-label={text.giveUp}
-                  title={text.giveUp}
+                  className="flex-1 py-2 px-2.5 rounded-2xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-500 dark:text-purple-400 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer"
                 >
-                  <HelpCircle size={17} />
-                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
+                  <HelpCircle size={15} />
+                  <span>{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
                 </button>
+
+                {/* Path Replay Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -502,19 +459,58 @@ export default function Game() {
                     else if (visitedPath.length >= 2) startReplay();
                   }}
                   disabled={visitedPath.length < 2}
-                  className={`w-12 h-12 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer ${
+                  className={`flex-1 py-2 px-2.5 rounded-2xl border font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer ${
                     isReplaying
                       ? 'bg-rose-500 text-white border-rose-400 animate-pulse'
                       : visitedPath.length >= 2
-                      ? 'bg-slate-800/90 border-slate-700/80 text-cyan-400 active:bg-cyan-500 active:text-slate-950'
-                      : 'bg-slate-800/40 border-slate-800/40 text-slate-600 opacity-40 cursor-not-allowed'
+                      ? 'bg-cyan-500/15 hover:bg-cyan-500/25 border-cyan-500/30 text-cyan-500 dark:text-cyan-400'
+                      : 'opacity-40 bg-slate-500/10 border-slate-500/20 text-slate-500 cursor-not-allowed'
                   }`}
-                  aria-label={text.pathReplay}
-                  title={text.pathReplay}
                 >
-                  <Play size={17} className={isReplaying ? 'animate-spin' : ''} fill={isReplaying ? 'currentColor' : 'none'} />
-                  <span className="text-[9px] font-bold mt-0.5 opacity-80">{isReplaying ? '停止' : '回放'}</span>
+                  <Play size={15} fill={isReplaying ? 'currentColor' : 'none'} className={isReplaying ? 'animate-spin' : ''} />
+                  <span>{isReplaying ? '停止' : '回放'}</span>
                 </button>
+
+                {/* Sound Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className={`py-2 px-3 rounded-2xl border font-bold text-xs flex items-center justify-center gap-1 shadow-sm active:scale-95 transition-all touch-manipulation cursor-pointer ${
+                    soundEnabled
+                      ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/30 text-emerald-500 dark:text-emerald-400'
+                      : 'bg-slate-500/10 border-slate-500/20 text-slate-500'
+                  }`}
+                  aria-label={soundEnabled ? 'Mute' : 'Unmute'}
+                  title={soundEnabled ? 'Mute' : 'Unmute'}
+                >
+                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                </button>
+              </div>
+
+              {/* 2. Big Spacious Ergonomic D-Pad */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-2.5 p-2 rounded-3xl bg-black/25 border border-white/10 shadow-xl max-w-[230px] mx-auto">
+                <div />
+                <ControlButton
+                  icon={<ChevronUp size={28} />}
+                  onClick={() => onPlayerMove(0, -1)}
+                  ariaLabel="Move Up"
+                />
+                <div />
+                <ControlButton
+                  icon={<ChevronLeft size={28} />}
+                  onClick={() => onPlayerMove(-1, 0)}
+                  ariaLabel="Move Left"
+                />
+                <ControlButton
+                  icon={<ChevronDown size={28} />}
+                  onClick={() => onPlayerMove(0, 1)}
+                  ariaLabel="Move Down"
+                />
+                <ControlButton
+                  icon={<ChevronRight size={28} />}
+                  onClick={() => onPlayerMove(1, 0)}
+                  ariaLabel="Move Right"
+                />
               </div>
             </div>
           </div>
