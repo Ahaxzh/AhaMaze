@@ -199,17 +199,21 @@ export const KIDS_EMOJIS = [
 
 // Available emoji avatars for the player character selector
 export const AVATAR_EMOJIS = [
-  '🌈🐱', '💖', '🩷', '⭐', '🌟', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊',
+  '🐱', '🐰', '🐶', '🦄', '🚀', '💖', '🩷', '⭐', '🌟', '🐼', '🦊',
   '🐸', '🐵', '🐧', '🦁', '🐯', '🐤', '🐣', '👑', '💎', '🍓',
-  '🍉', '🍑', '🌈', '🔥', '🌊', '🍀', '🎃', '💩', '🚀', '🎯',
+  '🍉', '🍑', '🌈', '🔥', '🌊', '🍀', '🎃', '💩', '🎯',
 ];
 
 // Kids mode: Story pair mapping (Player Avatar -> Matching Goal & Story Title)
 export const STORY_MATCH_MAP: Record<string, { goal: string; titleZh: string; titleEn: string }> = {
-  '🌈🐱': { goal: '🌌', titleZh: '彩虹猫遨游宇宙 🌈', titleEn: 'Nyan Cat in Space' },
-  '🐰': { goal: '🥕', titleZh: '小兔找胡萝卜', titleEn: 'Bunny & Carrot' },
-  '🐶': { goal: '🦴', titleZh: '小狗找骨头', titleEn: 'Puppy & Bone' },
   '🐱': { goal: '🌌', titleZh: '彩虹猫遨游宇宙 🌈', titleEn: 'Nyan Cat in Space' },
+  '🐰': { goal: '🥕', titleZh: '小兔找胡萝卜 🥕', titleEn: 'Bunny & Carrot' },
+  '🐶': { goal: '🦴', titleZh: '小狗找骨头 🦴', titleEn: 'Puppy & Bone' },
+  '🦄': { goal: '🏰', titleZh: '独角兽星尘魔法 🦄', titleEn: 'Unicorn Stardust' },
+  '🚀': { goal: '🪐', titleZh: '火箭喷射冲太空 🚀', titleEn: 'Rocket Jet Launch' },
+  '💩': { goal: '🚽', titleZh: '便便超人冲冲冲 💩', titleEn: 'Poop Rush' },
+  '🌊': { goal: '🏝️', titleZh: '海浪冲浪大冒险 🌊', titleEn: 'Ocean Surfing' },
+  '🔥': { goal: '🏕️', titleZh: '烈火熔岩大探险 🔥', titleEn: 'Fire Blaster' },
   '🐭': { goal: '🧀', titleZh: '小鼠找奶酪', titleEn: 'Mouse & Cheese' },
   '🐻': { goal: '🍯', titleZh: '小熊采蜂蜜', titleEn: 'Bear & Honey' },
   '🐼': { goal: '🎋', titleZh: '熊猫吃竹子', titleEn: 'Panda & Bamboo' },
@@ -218,9 +222,7 @@ export const STORY_MATCH_MAP: Record<string, { goal: string; titleZh: string; ti
   '🐯': { goal: '🥩', titleZh: '小老虎吃大肉', titleEn: 'Tiger & Meat' },
   '🦖': { goal: '🍖', titleZh: '恐龙大冒险', titleEn: 'Dino Adventure' },
   '🦕': { goal: '🌿', titleZh: '小恐龙觅食', titleEn: 'Little Dino' },
-  '🦄': { goal: '🏰', titleZh: '独角兽回城堡', titleEn: 'Unicorn Castle' },
   '👑': { goal: '🏰', titleZh: '公主回城堡', titleEn: 'Princess Castle' },
-  '🚀': { goal: '🪐', titleZh: '火箭探秘太空', titleEn: 'Space Explorer' },
   '🐸': { goal: '🪷', titleZh: '小青蛙跳荷花', titleEn: 'Frog & Lily' },
   '🐧': { goal: '❄️', titleZh: '企鹅回雪原', titleEn: 'Penguin & Snow' },
   '🦊': { goal: '🍇', titleZh: '狐狸摘葡萄', titleEn: 'Fox & Grapes' },
@@ -234,11 +236,8 @@ export const STORY_MATCH_MAP: Record<string, { goal: string; titleZh: string; ti
   '🌟': { goal: '🌙', titleZh: '星星伴月亮', titleEn: 'Star & Moon' },
   '💎': { goal: '👑', titleZh: '寻找宝石王冠', titleEn: 'Crown Jewel' },
   '🌈': { goal: '☀️', titleZh: '彩虹向太阳', titleEn: 'Rainbow & Sun' },
-  '🔥': { goal: '🏕️', titleZh: '篝火晚会', titleEn: 'Campfire Party' },
-  '🌊': { goal: '🏝️', titleZh: '海浪冲向小岛', titleEn: 'Ocean & Island' },
   '🍀': { goal: '🌈', titleZh: '幸运彩虹桥', titleEn: 'Lucky Rainbow' },
   '🎃': { goal: '🍬', titleZh: '万圣节不给糖就捣蛋', titleEn: 'Trick or Treat' },
-  '💩': { goal: '🚽', titleZh: '便便冲冲冲', titleEn: 'Poop Rush' },
   '🎯': { goal: '🏆', titleZh: '百发百中', titleEn: 'Bullseye' },
 };
 

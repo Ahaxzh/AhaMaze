@@ -177,14 +177,18 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       ctx.restore();
     }
 
-    const isNyanCat = playerEmoji === '🌈🐱' || playerEmoji === '🐱';
+    const isNyanCat = playerEmoji === '🐱';
+    const isRocket = playerEmoji === '🚀';
+    const isUnicorn = playerEmoji === '🦄';
+    const isPoop = playerEmoji === '💩';
+    const isOcean = playerEmoji === '🌊';
 
     // Dynamic Paths - Draw directly to context with sub-pixel alignment
     const pathToDraw = replayIndex >= 0 ? visitedPath.slice(0, replayIndex + 1) : visitedPath;
     const pathLen = pathToDraw.length;
     if (pathLen > 1) {
       if (isNyanCat) {
-        // 🌈 Authentic 6-Stripe Nyan Cat Rainbow Ribbon 🌈
+        // 🐱🌈 1. Authentic 6-Stripe Nyan Cat Rainbow Ribbon 🌈
         const NYAN_STRIPES = [
           '#ff0000', // Red
           '#ff9900', // Orange
@@ -226,15 +230,130 @@ export const MazeCanvas = React.memo(function MazeCanvas({
           ctx.stroke();
         }
 
-        // Draw sparkle stars along the rainbow trail
+        // Draw retro pixel sparkle stars along the rainbow trail
+        ctx.font = `${Math.floor(cellSize * 0.38)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i < pathLen - 1; i += 2) {
+          const sp = pathToDraw[i];
+          const sx = sp.x * cellSize + cellSize / 2;
+          const sy = sp.y * cellSize + cellSize / 2;
+          ctx.fillText(i % 4 === 1 ? '✨' : '⭐', sx, sy);
+        }
+      } else if (isRocket) {
+        // 🚀 2. Fiery Rocket Jet Flame & Plasma Exhaust Plume
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Outer Flame Smoke
+        ctx.lineWidth = Math.max(3, cellSize * 0.45);
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+
+        // Mid Intense Fire Orange
+        ctx.lineWidth = Math.max(2, cellSize * 0.28);
+        ctx.strokeStyle = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+
+        // Core White-Hot Jet Plasma
+        ctx.lineWidth = Math.max(1.2, cellSize * 0.12);
+        ctx.strokeStyle = '#fef08a';
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+
+        // Flame burst sparks
         ctx.font = `${Math.floor(cellSize * 0.35)}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         for (let i = 1; i < pathLen - 1; i += 3) {
           const sp = pathToDraw[i];
-          const sx = sp.x * cellSize + cellSize / 2;
-          const sy = sp.y * cellSize + cellSize / 2;
-          ctx.fillText('✨', sx, sy);
+          ctx.fillText('🔥', sp.x * cellSize + cellSize / 2, sp.y * cellSize + cellSize / 2);
+        }
+      } else if (isUnicorn) {
+        // 🦄 3. Dreamy Stardust Fairy Aurora Trail
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3, cellSize * 0.42);
+
+        // Pastel shimmer aurora
+        const unigrad = ctx.createLinearGradient(0, 0, pixelWidth, pixelHeight);
+        unigrad.addColorStop(0, '#f472b6');
+        unigrad.addColorStop(0.35, '#c084fc');
+        unigrad.addColorStop(0.7, '#38bdf8');
+        unigrad.addColorStop(1, '#4ade80');
+        ctx.strokeStyle = unigrad;
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Fairy dust sparkles
+        ctx.font = `${Math.floor(cellSize * 0.35)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i < pathLen - 1; i += 2) {
+          const sp = pathToDraw[i];
+          ctx.fillText(i % 4 === 1 ? '💖' : '✨', sp.x * cellSize + cellSize / 2, sp.y * cellSize + cellSize / 2);
+        }
+      } else if (isPoop) {
+        // 💩 4. Muddy Cartoon Track
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3, cellSize * 0.38);
+        ctx.strokeStyle = '#b45309';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        ctx.font = `${Math.floor(cellSize * 0.32)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i < pathLen - 1; i += 3) {
+          const sp = pathToDraw[i];
+          ctx.fillText('🫧', sp.x * cellSize + cellSize / 2, sp.y * cellSize + cellSize / 2);
+        }
+      } else if (isOcean) {
+        // 🌊 5. Foaming Azure Ocean Wave
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3, cellSize * 0.4);
+        ctx.strokeStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.moveTo(pathToDraw[0].x * cellSize + cellSize / 2, pathToDraw[0].y * cellSize + cellSize / 2);
+        for (let i = 1; i < pathLen; i++) {
+          ctx.lineTo(pathToDraw[i].x * cellSize + cellSize / 2, pathToDraw[i].y * cellSize + cellSize / 2);
+        }
+        ctx.stroke();
+
+        ctx.font = `${Math.floor(cellSize * 0.32)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i < pathLen - 1; i += 2) {
+          const sp = pathToDraw[i];
+          ctx.fillText('💧', sp.x * cellSize + cellSize / 2, sp.y * cellSize + cellSize / 2);
         }
       } else if (isKidsMode) {
         ctx.lineCap = 'round';
@@ -276,11 +395,11 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       const head = visitedPath[replayIndex];
       const px = head.x * cellSize + cellSize / 2;
       const py = head.y * cellSize + cellSize / 2;
-      if (isNyanCat) {
-        ctx.font = `${Math.floor(cellSize * 0.8)}px Arial`;
+      if (playerEmoji) {
+        ctx.font = `${Math.floor(cellSize * 0.78)}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🐱', px, py + cellSize * 0.05);
+        ctx.fillText(playerEmoji, px, py + cellSize * 0.05);
       } else if (isKidsMode) {
         ctx.font = `${Math.floor(cellSize * 0.7)}px Arial`;
         ctx.textAlign = 'center';

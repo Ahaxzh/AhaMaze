@@ -71,7 +71,7 @@ export const playMoveSound = (
   const isNyanCat = playerEmoji === '🌈🐱' || playerEmoji === '🐱';
 
   if (isNyanCat) {
-    // 🐱🌈 Authentic 8-bit Nyan Cat Chiptune Blip
+    // 🐱 8-bit Nyan Cat Chiptune Blip
     const freq = NYAN_STEP_FREQS[nyanStepIdx % NYAN_STEP_FREQS.length];
     nyanStepIdx++;
 
@@ -94,6 +94,70 @@ export const playMoveSound = (
 
     osc.start(now);
     osc.stop(now + 0.09);
+  } else if (playerEmoji === '🚀') {
+    // 🚀 Rocket Jet Pulse
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.08);
+
+    gain.gain.setValueAtTime(0.13, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } else if (playerEmoji === '🦄') {
+    // 🦄 Magical Fairy Sparkle Chime
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(1760, now + 0.09);
+
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
+    osc.start(now);
+    osc.stop(now + 0.11);
+  } else if (playerEmoji === '💩') {
+    // 💩 Funny cartoon squishy wobble
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.exponentialRampToValueAtTime(340, now + 0.04);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
+    osc.start(now);
+    osc.stop(now + 0.1);
   } else if (isKids) {
     // 🫧 Plump, juicy, bouncy bubble pop that sounds great on phone speakers (~110ms)
     osc.type = 'sine';
