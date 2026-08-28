@@ -53,15 +53,21 @@ const ControlButton = React.memo(function ControlButton({
   icon,
   onClick,
   ariaLabel,
+  appIsDark,
 }: {
   icon: React.ReactNode;
   onClick: () => void;
   ariaLabel: string;
+  appIsDark: boolean;
 }) {
   return (
     <button
       type="button"
-      className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-slate-800/95 border border-slate-700/90 flex items-center justify-center text-slate-100 active:bg-cyan-500 active:text-slate-950 active:scale-90 active:border-cyan-300 transition-all shadow-lg touch-manipulation cursor-pointer select-none"
+      className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-90 touch-manipulation cursor-pointer select-none border ${
+        appIsDark
+          ? 'bg-slate-800/95 border-slate-700/80 text-slate-100 active:bg-cyan-500 active:text-slate-950 active:border-cyan-300'
+          : 'bg-white/95 border-slate-200 text-slate-800 shadow-slate-200/80 active:bg-pink-500 active:text-white active:border-pink-400'
+      }`}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -434,131 +440,143 @@ export default function Game() {
               </div>
             </div>
 
-            {/* Mobile Bottom Game Dock: Left Actions + Center D-Pad + Right Actions */}
-            <div className="lg:hidden mt-2 shrink-0 flex items-center justify-center gap-2 sm:gap-3 w-full max-w-sm mx-auto px-1 select-none">
-              {/* Left Flank: New Maze + Sound Toggle */}
-              <div className="flex flex-col gap-2 items-center shrink-0">
-                <button
-                  type="button"
-                  onClick={() => startNewLevel()}
-                  className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border border-amber-300/40 shadow-md shadow-orange-500/20 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
-                  aria-label={text.newMaze}
-                  title={text.newMaze}
-                >
-                  <RefreshCw size={20} className="shrink-0" />
-                  <span className="text-[10px] font-black mt-0.5 tracking-tight">{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
-                </button>
+            {/* Mobile Unified Gamepad Deck */}
+            <div className="lg:hidden mt-2 shrink-0 w-full max-w-[360px] mx-auto px-1 select-none">
+              <div
+                className={`p-2.5 sm:p-3 rounded-[28px] border shadow-xl flex items-center justify-between gap-1 sm:gap-2 ${
+                  appIsDark
+                    ? 'bg-slate-900/85 border-white/10 text-white shadow-black/40'
+                    : 'bg-white/85 border-pink-200/80 text-slate-800 shadow-pink-500/10'
+                }`}
+              >
+                {/* Left Flank: New Maze + Sound Toggle */}
+                <div className="flex flex-col gap-2 items-center shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => startNewLevel()}
+                    className="w-14 h-14 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border border-amber-300/40 shadow-md shadow-orange-500/25 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
+                    aria-label={text.newMaze}
+                    title={text.newMaze}
+                  >
+                    <RefreshCw size={20} className="shrink-0" strokeWidth={2.4} />
+                    <span className="text-[10px] font-black mt-0.5 tracking-tight">{difficulty === 'Kids' ? '新关卡' : '新迷宫'}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
-                    soundEnabled
-                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-300/40 shadow-emerald-500/20'
-                      : appIsDark
-                      ? 'bg-slate-800 text-slate-400 border-slate-600'
-                      : 'bg-slate-200 text-slate-600 border-slate-300'
-                  }`}
-                  aria-label={soundEnabled ? 'Mute' : 'Unmute'}
-                  title={soundEnabled ? 'Mute' : 'Unmute'}
-                >
-                  {soundEnabled ? <Volume2 size={20} className="shrink-0" /> : <VolumeX size={20} className="shrink-0" />}
-                  <span className="text-[10px] font-black mt-0.5 tracking-tight">{soundEnabled ? '声音:开' : '声音:关'}</span>
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
+                      soundEnabled
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-300/40 shadow-emerald-500/25'
+                        : appIsDark
+                        ? 'bg-slate-800 text-slate-400 border-slate-600'
+                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                    }`}
+                    aria-label={soundEnabled ? 'Mute' : 'Unmute'}
+                    title={soundEnabled ? 'Mute' : 'Unmute'}
+                  >
+                    {soundEnabled ? <Volume2 size={20} className="shrink-0" strokeWidth={2.4} /> : <VolumeX size={20} className="shrink-0" strokeWidth={2.4} />}
+                    <span className="text-[10px] font-black mt-0.5 tracking-tight">{soundEnabled ? '声音:开' : '声音:关'}</span>
+                  </button>
+                </div>
 
-              {/* Center Symmetrical Cross D-Pad */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-3xl bg-black/25 border border-white/10 shadow-inner shrink-0">
-                <div />
-                <ControlButton
-                  icon={<ChevronUp size={28} />}
-                  onClick={() => onPlayerMove(0, -1)}
-                  ariaLabel="Move Up"
-                />
-                <div />
-                <ControlButton
-                  icon={<ChevronLeft size={28} />}
-                  onClick={() => onPlayerMove(-1, 0)}
-                  ariaLabel="Move Left"
-                />
-                <ControlButton
-                  icon={<ChevronDown size={28} />}
-                  onClick={() => onPlayerMove(0, 1)}
-                  ariaLabel="Move Down"
-                />
-                <ControlButton
-                  icon={<ChevronRight size={28} />}
-                  onClick={() => onPlayerMove(1, 0)}
-                  ariaLabel="Move Right"
-                />
-              </div>
+                {/* Center Symmetrical Cross D-Pad */}
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 shrink-0">
+                  <div />
+                  <ControlButton
+                    icon={<ChevronUp size={28} strokeWidth={2.8} />}
+                    onClick={() => onPlayerMove(0, -1)}
+                    ariaLabel="Move Up"
+                    appIsDark={appIsDark}
+                  />
+                  <div />
+                  <ControlButton
+                    icon={<ChevronLeft size={28} strokeWidth={2.8} />}
+                    onClick={() => onPlayerMove(-1, 0)}
+                    ariaLabel="Move Left"
+                    appIsDark={appIsDark}
+                  />
+                  <ControlButton
+                    icon={<ChevronDown size={28} strokeWidth={2.8} />}
+                    onClick={() => onPlayerMove(0, 1)}
+                    ariaLabel="Move Down"
+                    appIsDark={appIsDark}
+                  />
+                  <ControlButton
+                    icon={<ChevronRight size={28} strokeWidth={2.8} />}
+                    onClick={() => onPlayerMove(1, 0)}
+                    ariaLabel="Move Right"
+                    appIsDark={appIsDark}
+                  />
+                </div>
 
-              {/* Right Flank: Dynamic Contextual Action Buttons */}
-              <div className="flex flex-col gap-2 items-center shrink-0">
-                {isFinished ? (
-                  <>
-                    {/* 1. Next Level Button (Vibrant Orange/Amber) */}
-                    <button
-                      type="button"
-                      onClick={() => startNewLevel()}
-                      className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border border-amber-300/40 shadow-md shadow-orange-500/20 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
-                      aria-label={text.nextLevel || 'Next'}
-                      title={text.nextLevel || 'Next'}
-                    >
-                      <RefreshCw size={20} className="shrink-0" />
-                      <span className="text-[10px] font-black mt-0.5 tracking-tight">{lang === 'zh' ? '下一关' : 'Next'}</span>
-                    </button>
+                {/* Right Flank: Dynamic Contextual Action Buttons */}
+                <div className="flex flex-col gap-2 items-center shrink-0">
+                  {isFinished ? (
+                    <>
+                      {/* 1. Next Level Button (Vibrant Emerald/Teal) */}
+                      <button
+                        type="button"
+                        onClick={() => startNewLevel()}
+                        className="w-14 h-14 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white border border-amber-300/40 shadow-md shadow-orange-500/25 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
+                        aria-label={text.nextLevel || 'Next'}
+                        title={text.nextLevel || 'Next'}
+                      >
+                        <RefreshCw size={20} className="shrink-0" strokeWidth={2.4} />
+                        <span className="text-[10px] font-black mt-0.5 tracking-tight">{lang === 'zh' ? '下一关' : 'Next'}</span>
+                      </button>
 
-                    {/* 2. Path Replay Button (Vibrant Pink/Rose) */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isReplaying) stopReplay();
-                        else startReplay();
-                      }}
-                      className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
-                        isReplaying
-                          ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-rose-500/30'
-                          : 'bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-pink-300/40 shadow-pink-500/20'
-                      }`}
-                      aria-label={text.pathReplay}
-                      title={text.pathReplay}
-                    >
-                      <Play size={20} fill="white" className={`shrink-0 ${isReplaying ? 'animate-spin' : ''}`} />
-                      <span className="text-[10px] font-black mt-0.5 tracking-tight">{isReplaying ? '停止' : '回放'}</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {/* 1. Hint / Help Button (Vibrant Purple/Indigo) */}
-                    <button
-                      type="button"
-                      onClick={() => handleGiveUp()}
-                      className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white border border-purple-300/40 shadow-md shadow-indigo-500/20 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
-                      aria-label={text.giveUp}
-                      title={text.giveUp}
-                    >
-                      <HelpCircle size={20} className="shrink-0" />
-                      <span className="text-[10px] font-black mt-0.5 tracking-tight">{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
-                    </button>
+                      {/* 2. Path Replay Button (Vibrant Pink/Rose) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isReplaying) stopReplay();
+                          else startReplay();
+                        }}
+                        className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
+                          isReplaying
+                            ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-rose-500/30'
+                            : 'bg-gradient-to-br from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-pink-300/40 shadow-pink-500/25'
+                        }`}
+                        aria-label={text.pathReplay}
+                        title={text.pathReplay}
+                      >
+                        <Play size={20} fill="white" className={`shrink-0 ${isReplaying ? 'animate-spin' : ''}`} strokeWidth={2.4} />
+                        <span className="text-[10px] font-black mt-0.5 tracking-tight">{isReplaying ? '停止' : '回放'}</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* 1. Hint / Help Button (Vibrant Purple/Indigo) */}
+                      <button
+                        type="button"
+                        onClick={() => handleGiveUp()}
+                        className="w-14 h-14 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white border border-purple-300/40 shadow-md shadow-indigo-500/25 flex flex-col items-center justify-center active:scale-90 transition-all touch-manipulation cursor-pointer select-none"
+                        aria-label={text.giveUp}
+                        title={text.giveUp}
+                      >
+                        <HelpCircle size={20} className="shrink-0" strokeWidth={2.4} />
+                        <span className="text-[10px] font-black mt-0.5 tracking-tight">{difficulty === 'Kids' ? '帮帮我' : '提示'}</span>
+                      </button>
 
-                    {/* 2. Restart Level Button (Clean Solid Card) */}
-                    <button
-                      type="button"
-                      onClick={() => restartLevel()}
-                      className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
-                        appIsDark
-                          ? 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
-                          : 'bg-slate-200 text-slate-700 border-slate-300 hover:bg-slate-300'
-                      }`}
-                      aria-label={text.replay || 'Restart'}
-                      title={text.replay || 'Restart'}
-                    >
-                      <RotateCcw size={20} className="shrink-0" />
-                      <span className="text-[10px] font-black mt-0.5 tracking-tight">{lang === 'zh' ? '重走' : '重来'}</span>
-                    </button>
-                  </>
-                )}
+                      {/* 2. Restart Level Button (Clean Solid Card) */}
+                      <button
+                        type="button"
+                        onClick={() => restartLevel()}
+                        className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
+                          appIsDark
+                            ? 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
+                            : 'bg-white text-slate-700 border-slate-200 shadow-slate-200/80 hover:bg-slate-50'
+                        }`}
+                        aria-label={text.replay || 'Restart'}
+                        title={text.replay || 'Restart'}
+                      >
+                        <RotateCcw size={20} className="shrink-0" strokeWidth={2.4} />
+                        <span className="text-[10px] font-black mt-0.5 tracking-tight">{lang === 'zh' ? '重走' : '重来'}</span>
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
