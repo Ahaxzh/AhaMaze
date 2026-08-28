@@ -36,6 +36,13 @@ export const playMoveSound = (enabled: boolean) => {
   osc.connect(gain);
   gain.connect(ctx.destination);
 
+  osc.onended = () => {
+    try {
+      osc.disconnect();
+      gain.disconnect();
+    } catch {}
+  };
+
   osc.start(now);
   osc.stop(now + 0.08);
 };
@@ -62,6 +69,13 @@ export const playWinSound = (enabled: boolean) => {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
     osc.start(noteStart);
     osc.stop(noteStart + 0.25);
   });
@@ -85,6 +99,13 @@ export const playBumpSound = (enabled: boolean) => {
 
   osc.connect(gain);
   gain.connect(ctx.destination);
+
+  osc.onended = () => {
+    try {
+      osc.disconnect();
+      gain.disconnect();
+    } catch {}
+  };
 
   osc.start(now);
   osc.stop(now + 0.06);

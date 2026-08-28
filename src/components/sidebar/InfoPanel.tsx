@@ -84,8 +84,8 @@ export const InfoPanel = React.memo(function InfoPanel({
 
   return (
     <div
-      className={`p-4 rounded-2xl border shadow-sm backdrop-blur-md flex flex-col gap-3 ${
-        appIsDark ? 'bg-slate-900/60 border-white/5' : 'bg-white/70 border-white'
+      className={`p-4 rounded-2xl border shadow-sm flex flex-col gap-3 ${
+        appIsDark ? 'bg-slate-900/80 border-white/10' : 'bg-white/90 border-slate-200/80'
       }`}
     >
       <div className="text-xs font-black tracking-tight opacity-70 px-1 flex items-center gap-1.5">

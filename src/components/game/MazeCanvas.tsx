@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
 import { Cell } from '../../utils/maze';
 import { Position } from '../../types/game';
 import { Theme, Difficulty, GameMode, Language } from '../../types/game';
@@ -184,11 +183,12 @@ export const MazeCanvas = React.memo(function MazeCanvas({
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = Math.max(2, cellSize * 0.35);
-        const batchSize = pathLen > 30 ? Math.ceil(pathLen / 25) : 1;
+        // Batch segments into max 10 color transitions to minimize draw calls
+        const batchSize = Math.max(1, Math.ceil(pathLen / 10));
         for (let i = 1; i < pathLen; i += batchSize) {
           const endIdx = Math.min(i + batchSize, pathLen);
-          const hue = (i * 12) % 360;
-          ctx.strokeStyle = `hsla(${hue}, 80%, 65%, 0.65)`;
+          const hue = (i * 18) % 360;
+          ctx.strokeStyle = `hsla(${hue}, 80%, 65%, 0.7)`;
           ctx.beginPath();
           ctx.moveTo(pathToDraw[i - 1].x * cellSize + cellSize / 2, pathToDraw[i - 1].y * cellSize + cellSize / 2);
           for (let j = i; j < endIdx; j++) {
@@ -247,7 +247,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       }
     }
 
-    // High-performance Fog of War (Hardware-accelerated radial gradients, deduplicated visited points)
+    // High-performance Fog of War (Hardware-accelerated corridor + radial spotlight)
     const isFogActive = gameMode === 'Challenge' && fogCountdown === 0;
     if (isFogActive && !!fogCanvasRef.current) {
       const fogCanvas = fogCanvasRef.current;
@@ -276,33 +276,26 @@ export const MazeCanvas = React.memo(function MazeCanvas({
           pixelHeight + canvasPadding * 2
         );
 
-        // Cut out smooth visibility with radial gradients (native GPU acceleration)
+        // Cut out smooth visibility with destination-out
         ftx.globalCompositeOperation = 'destination-out';
 
-        // 1. Trail corridor cutouts: Deduplicate visited positions so backtracks don't multiply gradient operations
-        const trailRadius = cellSize * 2.2;
-        const uniqueVisited = new Map<string, Position>();
-        // Only sample every step or deduplicated cell
-        for (let i = 0; i < visitedPath.length; i++) {
-          const pt = visitedPath[i];
-          uniqueVisited.set(`${pt.x},${pt.y}`, pt);
-        }
-
-        const entries = Array.from(uniqueVisited.values());
-        // For large trails, sample with distance stride to keep frame rate locked at 60fps
-        const stride = entries.length > 80 ? 2 : 1;
-        for (let i = 0; i < entries.length; i += stride) {
-          const pt = entries[i];
-          const cx = pt.x * cellSize + cellSize / 2;
-          const cy = pt.y * cellSize + cellSize / 2;
-          const grad = ftx.createRadialGradient(cx, cy, cellSize * 0.4, cx, cy, trailRadius);
-          grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
-          grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
-          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ftx.fillStyle = grad;
+        // 1. Trail corridor cutouts via single fast stroked path (Ultra-lightweight on GPU)
+        if (visitedPath.length > 1) {
           ftx.beginPath();
-          ftx.arc(cx, cy, trailRadius, 0, Math.PI * 2);
-          ftx.fill();
+          ftx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+          ftx.lineWidth = cellSize * 2.2;
+          ftx.lineCap = 'round';
+          ftx.lineJoin = 'round';
+          ftx.moveTo(visitedPath[0].x * cellSize + cellSize / 2, visitedPath[0].y * cellSize + cellSize / 2);
+          const vLen = visitedPath.length;
+          const stride = vLen > 60 ? 2 : 1;
+          for (let i = 1; i < vLen; i += stride) {
+            ftx.lineTo(visitedPath[i].x * cellSize + cellSize / 2, visitedPath[i].y * cellSize + cellSize / 2);
+          }
+          if ((vLen - 1) % stride !== 0) {
+            ftx.lineTo(visitedPath[vLen - 1].x * cellSize + cellSize / 2, visitedPath[vLen - 1].y * cellSize + cellSize / 2);
+          }
+          ftx.stroke();
         }
 
         // 2. Large vision spotlight around player
@@ -408,33 +401,38 @@ export const Player = React.memo(function Player({
 }) {
   const t = THEME_CONFIGS[theme];
   return (
-    <motion.div
-      className="absolute z-20 flex items-center justify-center pointer-events-none will-change-transform"
-      initial={false}
-      animate={{ x: position.x * size, y: position.y * size }}
-      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-      style={{ width: size, height: size, top: 0, left: 0 }}
+    <div
+      className="absolute z-20 flex items-center justify-center pointer-events-none"
+      style={{
+        width: size,
+        height: size,
+        top: 0,
+        left: 0,
+        transform: `translate3d(${position.x * size}px, ${position.y * size}px, 0)`,
+        transition: 'transform 80ms cubic-bezier(0.2, 0, 0.2, 1)',
+        willChange: 'transform',
+      }}
     >
       {isKidsMode ? (
         <div
-          className="animate-kid-bounce drop-shadow-sm select-none"
-          style={{ fontSize: `${size * 0.7}px`, lineHeight: 1 }}
+          className="select-none flex items-center justify-center"
+          style={{ fontSize: `${size * 0.75}px`, lineHeight: 1 }}
         >
           {playerEmoji}
         </div>
       ) : (
         <div
-          className="rounded-full shadow-lg relative"
+          className="rounded-full shadow-md relative"
           style={{
-            width: size * 0.5,
-            height: size * 0.5,
+            width: size * 0.52,
+            height: size * 0.52,
             backgroundColor: t.playerColor,
           }}
         >
-          <div className="absolute inset-0 rounded-full bg-white opacity-60 blur-[1px]" />
+          <div className="absolute inset-0 rounded-full border border-white/50" />
         </div>
       )}
-    </motion.div>
+    </div>
   );
 });
 
@@ -478,23 +476,15 @@ export const EndMarkerPulse = React.memo(function EndMarkerPulse({
           <div
             className="absolute rounded-full animate-beacon-wave pointer-events-none"
             style={{
-              width: cellSize * 1.15,
-              height: cellSize * 1.15,
+              width: cellSize * 1.1,
+              height: cellSize * 1.1,
               backgroundColor: t.endColor,
               opacity: 0.35,
             }}
           />
-          {/* Subtle golden base ring */}
-          <div
-            className="absolute rounded-full border-2 border-yellow-400/40 opacity-75"
-            style={{
-              width: cellSize * 0.85,
-              height: cellSize * 0.85,
-            }}
-          />
           {/* Animated Goal Icon */}
           <div
-            className="relative z-10 animate-float-gentle drop-shadow-md select-none flex items-center justify-center"
+            className="relative z-10 animate-float-gentle select-none flex items-center justify-center"
             style={{
               fontSize: `${Math.max(16, cellSize * 0.72)}px`,
               lineHeight: 1,
@@ -515,7 +505,7 @@ export const EndMarkerPulse = React.memo(function EndMarkerPulse({
             }}
           />
           <div
-            className="relative z-10 animate-float-gentle drop-shadow-sm select-none"
+            className="relative z-10 animate-float-gentle select-none"
             style={{ fontSize: `${Math.max(14, cellSize * 0.65)}px`, lineHeight: 1 }}
           >
             🏁
@@ -527,24 +517,23 @@ export const EndMarkerPulse = React.memo(function EndMarkerPulse({
           <div
             className="absolute rounded-full animate-beacon-wave"
             style={{
-              width: cellSize * 0.95,
-              height: cellSize * 0.95,
+              width: cellSize * 0.9,
+              height: cellSize * 0.9,
               backgroundColor: t.endColor,
               opacity: 0.35,
             }}
           />
-          {/* Target Glowing Center Orb with Energy Halo */}
+          {/* Target Glowing Center Orb */}
           <div
-            className="relative rounded-full animate-pulse-soft flex items-center justify-center shadow-lg"
+            className="relative rounded-full animate-pulse-soft flex items-center justify-center shadow-md"
             style={{
-              width: cellSize * 0.48,
-              height: cellSize * 0.48,
-              background: `radial-gradient(circle at 35% 35%, #ffffff 0%, ${t.endColor} 70%, ${t.playerColor} 100%)`,
-              boxShadow: `0 0 12px ${t.endColor}80`,
+              width: cellSize * 0.46,
+              height: cellSize * 0.46,
+              backgroundColor: t.endColor,
             }}
           >
             <div
-              className="rounded-full bg-white opacity-80"
+              className="rounded-full bg-white opacity-85"
               style={{
                 width: cellSize * 0.16,
                 height: cellSize * 0.16,

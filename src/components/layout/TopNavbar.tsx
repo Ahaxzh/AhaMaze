@@ -26,7 +26,7 @@ export const TopNavbar = React.memo(function TopNavbar({
 
   return (
     <div className="relative z-20 shrink-0 p-2 md:p-4 pb-0">
-      <nav className={`flex items-center justify-between p-2 md:p-3 px-4 md:px-6 rounded-2xl border shadow-sm backdrop-blur-xl ${appIsDark ? 'bg-slate-900/40 border-white/5' : 'bg-white/60 border-black/5'}`}>
+      <nav className={`flex items-center justify-between p-2 md:p-3 px-4 md:px-6 rounded-2xl border shadow-md ${appIsDark ? 'bg-slate-900/90 border-white/10' : 'bg-white/95 border-black/10'}`}>
 
         {/* Left: Logo */}
         <div className="flex items-center gap-3">

@@ -8,7 +8,6 @@ interface KidsElement {
   duration: number;
   delay: number;
   visualSize: number;
-  rotate: number;
   drift: number;
   opacity: number;
 }
@@ -18,23 +17,22 @@ export const KidsBackground = React.memo(function KidsBackground({
 }: {
   isDark: boolean;
 }) {
-  // Use 24 elements with GPU-accelerated CSS animations instead of 100 JS-animated DOM nodes
+  // Use 8 lightweight elements with pure CSS transform translations, zero drop-shadow
   const elements = useMemo<KidsElement[]>(() => {
-    return Array.from({ length: 22 }).map((_, i) => {
-      const visualSize = 28 + (i % 6) * 6; // 28px - 58px
-      const left = ((i * 4.6 + (i % 3) * 2) % 94);
-      const emojiIndex = (i * 7 + (i % 5)) % KIDS_EMOJIS.length;
+    return Array.from({ length: 8 }).map((_, i) => {
+      const visualSize = 28 + (i % 4) * 8; // 28px - 52px
+      const left = 6 + (i * 12) % 86;
+      const emojiIndex = (i * 7 + 3) % KIDS_EMOJIS.length;
 
       return {
         id: i,
         emoji: KIDS_EMOJIS[emojiIndex].trim(),
         left,
-        duration: 14 + (i % 6) * 3, // 14s - 29s
-        delay: -((i * 3.1) % 25), // negative delay so they are already scattered at load
+        duration: 18 + (i % 4) * 4, // 18s - 30s gentle float
+        delay: -((i * 4.5) % 20),
         visualSize,
-        rotate: ((i * 47) % 360) - 180,
-        drift: ((i % 5) - 2) * 30, // -60px to +60px
-        opacity: 0.45 + (i % 4) * 0.1, // 0.45 - 0.75
+        drift: ((i % 3) - 1) * 20, // -20px to +20px subtle drift
+        opacity: 0.35 + (i % 3) * 0.1, // 0.35 - 0.55
       };
     });
   }, []);
@@ -48,19 +46,19 @@ export const KidsBackground = React.memo(function KidsBackground({
       }`}
     >
       <div
-        className="absolute inset-0 opacity-40"
+        className="absolute inset-0 opacity-30"
         style={{
           backgroundImage: `radial-gradient(${
-            isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.9)'
-          } 4px, transparent 4px)`,
-          backgroundSize: '40px 40px',
+            isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.8)'
+          } 3px, transparent 3px)`,
+          backgroundSize: '36px 36px',
         }}
       />
       {elements.map((el) => {
         return (
           <div
             key={el.id}
-            className="absolute animate-kids-float drop-shadow-sm select-none"
+            className="absolute animate-kids-float select-none pointer-events-none"
             style={
               {
                 left: `${el.left}vw`,
@@ -70,7 +68,6 @@ export const KidsBackground = React.memo(function KidsBackground({
                 '--float-duration': `${el.duration}s`,
                 '--float-delay': `${el.delay}s`,
                 '--float-drift': `${el.drift}px`,
-                '--float-rotate': `${el.rotate}deg`,
                 '--float-opacity': el.opacity,
               } as React.CSSProperties
             }
@@ -82,3 +79,4 @@ export const KidsBackground = React.memo(function KidsBackground({
     </div>
   );
 });
+

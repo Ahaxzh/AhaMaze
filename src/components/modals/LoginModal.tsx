@@ -95,7 +95,7 @@ export const LoginModal = React.memo(function LoginModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 overflow-y-auto"
       onClick={() => setShowLogin(false)}
     >
       <motion.div
@@ -103,7 +103,7 @@ export const LoginModal = React.memo(function LoginModal({
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.92, y: 16, opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-        className={`relative w-full max-w-md my-auto rounded-[28px] shadow-2xl overflow-hidden border backdrop-blur-xl ${
+        className={`relative w-full max-w-md my-auto rounded-[28px] shadow-2xl overflow-hidden border ${
           appIsDark
             ? 'bg-slate-900/95 border-white/10 text-white shadow-black/80'
             : 'bg-white/95 border-slate-200/80 text-slate-900 shadow-slate-400/30'

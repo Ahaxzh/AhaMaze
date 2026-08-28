@@ -35,7 +35,7 @@ export const ResultPanel = React.memo(function ResultPanel({
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-      className={`p-6 rounded-2xl border shadow-xl flex flex-col gap-4 flex-1 backdrop-blur-xl transition-all duration-500 ${appIsDark ? 'bg-slate-900/80 border-white/10' : 'bg-white/80 border-white'}`} 
+      className={`p-6 rounded-2xl border shadow-xl flex flex-col gap-4 flex-1 transition-all duration-300 ${appIsDark ? 'bg-slate-900/95 border-white/10' : 'bg-white/95 border-slate-200'}`} 
       style={gameState === 'won' ? { boxShadow: `0 0 40px ${t.playerColor}30`, borderColor: `${t.playerColor}40` } : undefined}
     >
       {gameState === 'won' ? (

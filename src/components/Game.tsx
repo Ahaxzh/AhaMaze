@@ -42,7 +42,6 @@ import { useGamepad } from '../hooks/useGamepad';
 import { useKeyboard } from '../hooks/useKeyboard';
 import { useTouchSwipe } from '../hooks/useTouchSwipe';
 
-// --- Mobile D-pad control button ---
 const ControlButton = React.memo(function ControlButton({
   icon,
   onClick,
@@ -54,8 +53,12 @@ const ControlButton = React.memo(function ControlButton({
 }) {
   return (
     <button
-      className="w-14 h-14 rounded-full bg-slate-800/50 border border-slate-700 flex items-center justify-center text-slate-300 active:bg-cyan-500 active:text-slate-900 active:border-cyan-400 transition-colors backdrop-blur-sm shadow-md"
+      className="w-14 h-14 rounded-full bg-slate-800/90 border border-slate-700/80 flex items-center justify-center text-slate-200 active:bg-cyan-500 active:text-slate-950 active:border-cyan-400 transition-colors shadow-md touch-manipulation"
       onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onTouchStart={(e) => {
         e.stopPropagation();
         onClick();
       }}
@@ -156,7 +159,7 @@ export default function Game() {
     onMove: onPlayerMove,
     onRestart: startNewLevel,
   });
-  const { onTouchStart, onTouchEnd } = useTouchSwipe({
+  const { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel } = useTouchSwipe({
     enabled: controlsEnabled,
     onMove: onPlayerMove,
   });
@@ -255,7 +258,9 @@ export default function Game() {
     <div
       className={`fixed inset-0 flex flex-col font-sans overflow-hidden select-none ${t.bg} ${t.text}`}
       onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
     >
       {/* Background texture */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -300,7 +305,7 @@ export default function Game() {
 
             {/* Maze container glass frame */}
             <div
-              className={`relative backdrop-blur-md rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
+              className={`relative rounded-2xl shadow-xl border ease-out flex items-center justify-center p-2 md:p-3 ${t.containerBg} ${t.containerBorder}`}
               style={{
                 width: 'fit-content',
                 height: 'fit-content',
@@ -364,10 +369,10 @@ export default function Game() {
                         key={fogCountdown}
                         initial={{ opacity: 0, y: -10, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        className={`px-4 py-2 rounded-full backdrop-blur-md border shadow-lg font-bold flex items-center gap-2 ${
+                        className={`px-4 py-2 rounded-full border shadow-lg font-bold flex items-center gap-2 ${
                           appIsDark
-                            ? 'bg-slate-900/80 border-rose-500/50 text-rose-400'
-                            : 'bg-white/80 border-red-500/50 text-red-600'
+                            ? 'bg-slate-900/95 border-rose-500/60 text-rose-400'
+                            : 'bg-white/95 border-red-500/60 text-red-600'
                         }`}
                       >
                         <Clock
@@ -437,7 +442,7 @@ export default function Game() {
           {/* Mobile backdrop overlay */}
           {showMobileSidebar && (
             <div
-              className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-35 transition-opacity"
+              className="lg:hidden fixed inset-0 bg-black/60 z-35 transition-opacity"
               onClick={closeMobileSidebar}
               aria-label="Close sidebar backdrop"
             />
@@ -450,8 +455,8 @@ export default function Game() {
             lg:translate-x-0 transition-transform duration-300 cubic-bezier(0.4, 0, 0.2, 1)
             fixed lg:relative top-[4.5rem] lg:top-0 right-3 lg:right-0 bottom-3 lg:bottom-0 z-40 lg:z-30
             w-[calc(100vw-1.5rem)] sm:w-[380px] lg:w-[400px] max-w-[400px] shrink-0 flex flex-col
-            rounded-[28px] border shadow-2xl backdrop-blur-2xl overflow-hidden
-            ${appIsDark ? 'bg-slate-900/90 border-white/10 text-white' : 'bg-white/90 border-black/10 text-slate-800'}
+            rounded-[28px] border shadow-2xl overflow-hidden
+            ${appIsDark ? 'bg-slate-900/95 border-white/10 text-white' : 'bg-white/95 border-slate-200 text-slate-800'}
           `}
           >
             {/* Mobile Drawer Header with clearance from navbar */}
