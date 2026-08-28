@@ -199,16 +199,17 @@ export const KIDS_EMOJIS = [
 
 // Available emoji avatars for the player character selector
 export const AVATAR_EMOJIS = [
-  '💖', '🩷', '⭐', '🌟', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊',
+  '🌈🐱', '💖', '🩷', '⭐', '🌟', '🦄', '🐰', '🐱', '🐶', '🐼', '🦊',
   '🐸', '🐵', '🐧', '🦁', '🐯', '🐤', '🐣', '👑', '💎', '🍓',
   '🍉', '🍑', '🌈', '🔥', '🌊', '🍀', '🎃', '💩', '🚀', '🎯',
 ];
 
 // Kids mode: Story pair mapping (Player Avatar -> Matching Goal & Story Title)
 export const STORY_MATCH_MAP: Record<string, { goal: string; titleZh: string; titleEn: string }> = {
+  '🌈🐱': { goal: '🌌', titleZh: '彩虹猫遨游宇宙 🌈', titleEn: 'Nyan Cat in Space' },
   '🐰': { goal: '🥕', titleZh: '小兔找胡萝卜', titleEn: 'Bunny & Carrot' },
   '🐶': { goal: '🦴', titleZh: '小狗找骨头', titleEn: 'Puppy & Bone' },
-  '🐱': { goal: '🐟', titleZh: '小猫钓大鱼', titleEn: 'Kitty & Fish' },
+  '🐱': { goal: '🌌', titleZh: '彩虹猫遨游宇宙 🌈', titleEn: 'Nyan Cat in Space' },
   '🐭': { goal: '🧀', titleZh: '小鼠找奶酪', titleEn: 'Mouse & Cheese' },
   '🐻': { goal: '🍯', titleZh: '小熊采蜂蜜', titleEn: 'Bear & Honey' },
   '🐼': { goal: '🎋', titleZh: '熊猫吃竹子', titleEn: 'Panda & Bamboo' },

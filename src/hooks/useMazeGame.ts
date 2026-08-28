@@ -11,6 +11,7 @@ interface UseMazeGameOptions {
   theme: Theme;
   soundEnabled: boolean;
   playerName: string;
+  playerEmoji?: string;
   onGameEnd?: () => void;
 }
 
@@ -20,6 +21,7 @@ export function useMazeGame({
   theme,
   soundEnabled,
   playerName,
+  playerEmoji,
   onGameEnd,
 }: UseMazeGameOptions) {
   const { width: MAZE_WIDTH, height: MAZE_HEIGHT } = MAZE_SIZES[difficulty];
@@ -48,6 +50,8 @@ export function useMazeGame({
   mazeRef.current = maze;
   const soundEnabledRef = useRef(soundEnabled);
   soundEnabledRef.current = soundEnabled;
+  const playerEmojiRef = useRef(playerEmoji);
+  playerEmojiRef.current = playerEmoji;
   const startTimeRef = useRef(startTime);
   startTimeRef.current = startTime;
   const movesRef = useRef(moves);
@@ -113,7 +117,7 @@ export function useMazeGame({
       setFinalTime(fTime);
 
       const isKids = difficultyRef.current === 'Kids';
-      playWinSound(soundEnabledRef.current, isKids);
+      playWinSound(soundEnabledRef.current, isKids, playerEmojiRef.current);
 
       // Festive confetti celebration
       const t = THEME_CONFIGS[themeRef.current];
@@ -266,7 +270,7 @@ export function useMazeGame({
         return next;
       });
 
-      playMoveSound(soundEnabledRef.current, isKids);
+      playMoveSound(soundEnabledRef.current, isKids, playerEmojiRef.current);
 
       if (newX === w - 1 && newY === h - 1) {
         handleWin(m);
@@ -292,13 +296,13 @@ export function useMazeGame({
         setIsReplaying(false);
         setReplayIndex(-1);
         if (isKids) {
-          playWinSound(soundEnabledRef.current, true);
+          playWinSound(soundEnabledRef.current, true, playerEmojiRef.current);
         }
         return;
       }
       setReplayIndex(idx);
       if (isKids && idx % 2 === 0) {
-        playMoveSound(soundEnabledRef.current, true);
+        playMoveSound(soundEnabledRef.current, true, playerEmojiRef.current);
       }
     }, speed);
   }, [visitedPath, stopReplay]);

@@ -146,6 +146,7 @@ export default function Game() {
     theme,
     soundEnabled,
     playerName,
+    playerEmoji,
     onGameEnd: () => {
       // Keep mobile screen unobstructed so player can see celebration & replay
     },
@@ -371,6 +372,7 @@ export default function Game() {
                         gameMode={gameMode}
                         fogCountdown={fogCountdown}
                         playerPos={playerPos}
+                        playerEmoji={playerEmoji}
                       />
                       <EndMarkerPulse
                         mazeWidth={MAZE_WIDTH}
@@ -470,7 +472,7 @@ export default function Game() {
                       setSoundEnabled(next);
                       if (next) {
                         resumeAudio();
-                        playMoveSound(true, difficulty === 'Kids');
+                        playMoveSound(true, difficulty === 'Kids', playerEmoji);
                       }
                     }}
                     className={`w-14 h-14 sm:w-15 sm:h-15 rounded-2xl border flex flex-col items-center justify-center active:scale-90 transition-all shadow-md touch-manipulation cursor-pointer select-none ${
@@ -682,16 +684,8 @@ export default function Game() {
                 difficulty={difficulty}
                 setDifficulty={setDifficulty}
                 theme={theme}
-                isFinished={isFinished}
-                gameState={gameState}
                 restartLevel={restartLevel}
-                handleGiveUp={handleGiveUp}
                 startNewLevel={startNewLevel}
-                isReplaying={isReplaying}
-                startReplay={startReplay}
-                stopReplay={stopReplay}
-                soundEnabled={soundEnabled}
-                setSoundEnabled={setSoundEnabled}
                 onAction={closeMobileSidebar}
               />
             </div>

@@ -17,6 +17,7 @@ interface MazeCanvasProps {
   gameMode: GameMode;
   fogCountdown: number;
   playerPos: Position;
+  playerEmoji?: string;
 }
 
 export const MazeCanvas = React.memo(function MazeCanvas({
@@ -32,6 +33,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
   gameMode,
   fogCountdown,
   playerPos,
+  playerEmoji,
 }: MazeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pixelWidth = Math.round(mazeWidth * cellSize);
@@ -175,11 +177,66 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       ctx.restore();
     }
 
+    const isNyanCat = playerEmoji === '🌈🐱' || playerEmoji === '🐱';
+
     // Dynamic Paths - Draw directly to context with sub-pixel alignment
     const pathToDraw = replayIndex >= 0 ? visitedPath.slice(0, replayIndex + 1) : visitedPath;
     const pathLen = pathToDraw.length;
     if (pathLen > 1) {
-      if (isKidsMode) {
+      if (isNyanCat) {
+        // 🌈 Authentic 6-Stripe Nyan Cat Rainbow Ribbon 🌈
+        const NYAN_STRIPES = [
+          '#ff0000', // Red
+          '#ff9900', // Orange
+          '#ffff00', // Yellow
+          '#33ff00', // Green
+          '#0099ff', // Blue
+          '#6633ff', // Purple
+        ];
+        const totalRibbonWidth = Math.max(4, cellSize * 0.46);
+        const stripeThickness = totalRibbonWidth / NYAN_STRIPES.length;
+        ctx.lineCap = 'butt';
+        ctx.lineJoin = 'miter';
+        ctx.lineWidth = stripeThickness;
+
+        for (let sIdx = 0; sIdx < NYAN_STRIPES.length; sIdx++) {
+          const color = NYAN_STRIPES[sIdx];
+          const offset = (sIdx - 2.5) * stripeThickness;
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+
+          for (let i = 0; i < pathLen - 1; i++) {
+            const p1 = pathToDraw[i];
+            const p2 = pathToDraw[i + 1];
+            const x1 = p1.x * cellSize + cellSize / 2;
+            const y1 = p1.y * cellSize + cellSize / 2;
+            const x2 = p2.x * cellSize + cellSize / 2;
+            const y2 = p2.y * cellSize + cellSize / 2;
+
+            if (p1.x !== p2.x) {
+              // Horizontal movement: vertical stripe offset
+              ctx.moveTo(x1, y1 + offset);
+              ctx.lineTo(x2, y2 + offset);
+            } else {
+              // Vertical movement: horizontal stripe offset
+              ctx.moveTo(x1 + offset, y1);
+              ctx.lineTo(x2 + offset, y2);
+            }
+          }
+          ctx.stroke();
+        }
+
+        // Draw sparkle stars along the rainbow trail
+        ctx.font = `${Math.floor(cellSize * 0.35)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i < pathLen - 1; i += 3) {
+          const sp = pathToDraw[i];
+          const sx = sp.x * cellSize + cellSize / 2;
+          const sy = sp.y * cellSize + cellSize / 2;
+          ctx.fillText('✨', sx, sy);
+        }
+      } else if (isKidsMode) {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = Math.max(2, cellSize * 0.35);
@@ -219,7 +276,12 @@ export const MazeCanvas = React.memo(function MazeCanvas({
       const head = visitedPath[replayIndex];
       const px = head.x * cellSize + cellSize / 2;
       const py = head.y * cellSize + cellSize / 2;
-      if (isKidsMode) {
+      if (isNyanCat) {
+        ctx.font = `${Math.floor(cellSize * 0.8)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🐱', px, py + cellSize * 0.05);
+      } else if (isKidsMode) {
         ctx.font = `${Math.floor(cellSize * 0.7)}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -365,6 +427,7 @@ export const MazeCanvas = React.memo(function MazeCanvas({
     mazeWidth,
     mazeHeight,
     isKidsMode,
+    playerEmoji,
     gameMode,
     isFogActive,
     playerPos,

@@ -46,12 +46,20 @@ export const resumeAudio = () => {
   }
 };
 
+let nyanStepIdx = 0;
+const NYAN_STEP_FREQS = [554.37, 622.25, 739.99, 830.61, 739.99, 622.25, 554.37, 493.88];
+
 /**
  * Play move sound:
+ * - Nyan Cat mode: Iconic 8-bit chip synth melody blips
  * - Kids mode: Plump, bouncy, clearly audible bubble water pop (Pop! 🫧)
  * - Standard mode: Crisp wooden step tick
  */
-export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
+export const playMoveSound = (
+  enabled: boolean,
+  isKids: boolean = false,
+  playerEmoji?: string
+) => {
   if (!enabled) return;
   const ctx = initAudio();
   if (!ctx || !masterGain) return;
@@ -60,7 +68,33 @@ export const playMoveSound = (enabled: boolean, isKids: boolean = false) => {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
-  if (isKids) {
+  const isNyanCat = playerEmoji === '🌈🐱' || playerEmoji === '🐱';
+
+  if (isNyanCat) {
+    // 🐱🌈 Authentic 8-bit Nyan Cat Chiptune Blip
+    const freq = NYAN_STEP_FREQS[nyanStepIdx % NYAN_STEP_FREQS.length];
+    nyanStepIdx++;
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.13, now);
+    gain.gain.setValueAtTime(0.13, now + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
+    osc.start(now);
+    osc.stop(now + 0.09);
+  } else if (isKids) {
     // 🫧 Plump, juicy, bouncy bubble pop that sounds great on phone speakers (~110ms)
     osc.type = 'sine';
     osc.frequency.setValueAtTime(580, now);
@@ -152,51 +186,76 @@ export const playBumpSound = (enabled: boolean, isKids: boolean = false) => {
   osc.stop(now + 0.12);
 };
 
-/**
- * Play level clear victory fanfare:
- * - Kids mode: Full ~4.5s Super Mario / Nintendo Level-Clear triumphant anthem (Intro flourish -> 8-bit march -> Grand C-Major finale!)
- * - Standard mode: Rich multi-phrase victory chime
- */
-export const playWinSound = (enabled: boolean, isKids: boolean = false) => {
+export const playWinSound = (
+  enabled: boolean,
+  isKids: boolean = false,
+  playerEmoji?: string
+) => {
   if (!enabled) return;
   const ctx = initAudio();
   if (!ctx || !masterGain) return;
 
   const now = ctx.currentTime;
+  const isNyanCat = playerEmoji === '🌈🐱' || playerEmoji === '🐱';
 
-  if (isKids) {
+  // Helper to play an authentic bright 8-bit lead note
+  const play8BitNote = (freq: number, startSec: number, durSec: number, vol = 0.11) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, startSec);
+
+    gain.gain.setValueAtTime(vol, startSec);
+    gain.gain.setValueAtTime(vol, startSec + durSec * 0.7);
+    gain.gain.exponentialRampToValueAtTime(0.001, startSec + durSec);
+
+    osc.connect(gain);
+    gain.connect(masterGain!);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {}
+    };
+
+    osc.start(startSec);
+    osc.stop(startSec + durSec);
+  };
+
+  if (isNyanCat) {
+    // 🐱🌈 Iconic Nyan Cat 8-Bit Victory Song Melody!
+    const FS4 = 369.99, GS4 = 415.30, AS4 = 466.16, B4 = 493.88;
+    const CS5 = 554.37, D5 = 587.33, DS5 = 622.25, E5 = 659.25, FS5 = 739.99, GS5 = 830.61, AS5 = 932.33, B5 = 987.77;
+
+    const nyanMelody = [
+      // Phrase 1: Nyan-nyan-nyan-nyan...
+      { f: FS5, d: 0.11 }, { f: GS5, d: 0.11 }, { f: DS5, d: 0.11 }, { f: DS5, d: 0.11 },
+      { f: B4,  d: 0.11 }, { f: D5,  d: 0.11 }, { f: CS5, d: 0.11 }, { f: B4,  d: 0.22 },
+      { f: B4,  d: 0.11 }, { f: CS5, d: 0.11 }, { f: D5,  d: 0.11 }, { f: D5,  d: 0.11 },
+      { f: CS5, d: 0.11 }, { f: B4,  d: 0.11 }, { f: CS5, d: 0.11 }, { f: DS5, d: 0.22 },
+      // Phrase 2:
+      { f: FS5, d: 0.11 }, { f: GS5, d: 0.11 }, { f: DS5, d: 0.11 }, { f: FS5, d: 0.11 },
+      { f: CS5, d: 0.11 }, { f: DS5, d: 0.11 }, { f: B4,  d: 0.11 }, { f: CS5, d: 0.11 },
+      { f: B4,  d: 0.11 }, { f: DS5, d: 0.11 }, { f: FS5, d: 0.11 }, { f: GS5, d: 0.11 },
+      { f: DS5, d: 0.11 }, { f: FS5, d: 0.11 }, { f: CS5, d: 0.11 }, { f: DS5, d: 0.11 },
+      // Finale High Notes:
+      { f: B4,  d: 0.11 }, { f: D5,  d: 0.11 }, { f: DS5, d: 0.11 }, { f: D5,  d: 0.11 },
+      { f: CS5, d: 0.11 }, { f: B4,  d: 0.11 }, { f: CS5, d: 0.11 }, { f: B5,  d: 0.60 },
+    ];
+
+    let tCursor = 0;
+    nyanMelody.forEach((note) => {
+      play8BitNote(note.f, now + tCursor, note.d, 0.12);
+      tCursor += note.d;
+    });
+  } else if (isKids) {
     // 🎺 Authentic ~4.5s Super Mario Style Level Clear Victory Anthem 🎺
     const G3 = 196.0, C4 = 261.63, G4 = 392.0;
     const Ab4 = 415.3, Bb4 = 466.16, B4 = 493.88;
     const C5 = 523.25, D5 = 587.33, Eb5 = 622.25, E5 = 659.25, F5 = 698.46, G5 = 783.99, Ab5 = 830.61, Bb5 = 932.33;
     const C6 = 1046.5, E6 = 1318.51, G6 = 1567.98;
-
-    // Helper to play an authentic bright 8-bit lead note
-    const play8BitNote = (freq: number, startSec: number, durSec: number, vol = 0.11) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      // Square wave for the iconic Nintendo NES sound
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(freq, startSec);
-
-      gain.gain.setValueAtTime(vol, startSec);
-      gain.gain.setValueAtTime(vol, startSec + durSec * 0.7);
-      gain.gain.exponentialRampToValueAtTime(0.001, startSec + durSec);
-
-      osc.connect(gain);
-      gain.connect(masterGain!);
-
-      osc.onended = () => {
-        try {
-          osc.disconnect();
-          gain.disconnect();
-        } catch {}
-      };
-
-      osc.start(startSec);
-      osc.stop(startSec + durSec);
-    };
 
     // Helper to play a warm harmonic chord
     const playChord = (freqs: number[], startSec: number, durSec: number, vol = 0.08) => {
